@@ -1,0 +1,3 @@
+[submodule "bc_deep_learning_in_biology"]
+	path = bc_deep_learning_in_biology
+	url = https://github.com/evocellnet/bc_deep_learning_in_biology
