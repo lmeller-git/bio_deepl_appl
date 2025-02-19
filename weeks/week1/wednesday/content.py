@@ -68,7 +68,7 @@ data_dir = "/path/of/datafolder"
 
 labels_df = pd.read_csv(data_dir + "/metadata.csv", index_col=0)
 
-labels_df
+print("labels_df = ", labels_df)
 ##### TODO ######
 
 # get the percentage of normal and tumor classes in the dataset
@@ -609,9 +609,6 @@ class LitMRIModel(L.LightningModule):
 
 # new tab should open in your browser
 
-%reload_ext tensorboard
-
-%tensorboard --logdir=lightning_logs/
 # define parameters
 
 model_parameters={
