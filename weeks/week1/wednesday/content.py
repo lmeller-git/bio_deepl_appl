@@ -5,19 +5,16 @@ import numpy as np
 import pandas as pd
 
 
-
 # for plotting
 
 import matplotlib.pyplot as plt
 
-import seaborn as sns 
-
+import seaborn as sns
 
 
 # dealing with images
 
 from PIL import Image
-
 
 
 # Pytorch
@@ -39,16 +36,14 @@ from torchvision.utils import make_grid
 import torchmetrics
 
 
-
 # Pytorch Lightning
 
 import lightning as L
 
 
-
 # for visualization
 
-import tensorboard
+# import tensorboard
 # check if we can use GPUs
 
 torch.cuda.is_available()
@@ -56,12 +51,10 @@ torch.cuda.is_available()
 
 # enter the path of the data directory
 
-data_dir = "/path/of/datafolder" 
-
+data_dir = "../data/tutorial_mri_data"
 
 
 ######################
-
 
 
 # read the labels into a dataframe with pandas
@@ -73,16 +66,15 @@ print("labels_df = ", labels_df)
 
 # get the percentage of normal and tumor classes in the dataset
 
+tumor = labels_df[labels_df["class"] == "tumor"].count()
+normal = labels_df[labels_df["class"] == "normal"].count()
+print(tumor, normal)
+normal_percentage = normal / (tumor + normal)
 
-
-normal_percentage = 
-
-tumor_percentage = 
-
+tumor_percentage = tumor / (normal + tumor)
 
 
 #################
-
 
 
 print("Normal percentage: {}%".format(normal_percentage))
@@ -90,44 +82,33 @@ print("Normal percentage: {}%".format(normal_percentage))
 print("Tumor percentage: {}%".format(tumor_percentage))
 
 
-
-sns.histplot(labels_df, x="class")
+# sns.histplot(labels_df, x="class")
 image_dir = data_dir + "/Brain Tumor Data Set/Brain Tumor Data Set/"
 
-# seed everything 
+# seed everything
 
-torch.manual_seed(42) # set random seed to have reproducibility between the tutorials
-
+torch.manual_seed(42)  # set random seed to have reproducibility between the tutorials
 
 
 # adding transforms to have same dimensions and some random rotations/flips to get more robust predictions
 
 transform = transforms.Compose(
-
-                [
-
-                transforms.Resize((256,256)),
-
-                transforms.RandomHorizontalFlip(p=0.5),
-
-                transforms.RandomVerticalFlip(p=0.5),
-
-                transforms.RandomRotation(30),
-
-                transforms.ToTensor(),
-
-                transforms.Normalize(mean = [0.485, 0.456, 0.406],std = [0.229, 0.224, 0.225]) # from ImageNet
-
-                ]  
-
-            )
-
+    [
+        transforms.Resize((256, 256)),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomVerticalFlip(p=0.5),
+        transforms.RandomRotation(30),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        ),  # from ImageNet
+    ]
+)
 
 
 # load the complete dataset
 
-full_dataset = torchvision.datasets.ImageFolder(image_dir, transform=transform) 
-
+full_dataset = torchvision.datasets.ImageFolder(image_dir, transform=transform)
 
 
 ########## TODO ###############
@@ -136,47 +117,41 @@ full_dataset = torchvision.datasets.ImageFolder(image_dir, transform=transform)
 
 # use a pytorch function to do this
 
-train_set, val_set, test_set = 
-
+train_set, val_set, test_set = torch.utils.data.random_split(
+    full_dataset, [0.7, 0.15, 0.15]
+)
 
 
 # define the dataloaders for train, validation and test (use shuffle for train only)
 
 batch_size_train = 256
 
-batch_size = 128 # for eval and test
-
+batch_size = 128  # for eval and test
 
 
 # usinf DataLoader from Pytorch
 
-test_loader = DataLoader(test_set, batch_size = batch_size, shuffle = False, num_workers = 16)
+test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=16)
 
-val_loader = 
+val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, num_workers=16)
 
-train_loader = 
-
+train_loader = DataLoader(
+    train_set, batch_size=batch_size, shuffle=False, num_workers=16
+)
 
 
 ###############################
 # plots n random brain MRI images from the passed dataset
 
+
 def plot_images(dataset, n=16):
+    CLA_label = {0: "Brain Tumor", 1: "Healthy"}
 
-    CLA_label = {
-
-    0 : 'Brain Tumor',
-
-    1 : 'Healthy'
-
-    } 
-
-    cols, rows = 4, int(np.ceil(n/4))
+    cols, rows = 4, int(np.ceil(n / 4))
 
     figure = plt.figure(figsize=(10, 10))
 
     for i in range(1, n + 1):
-
         sample_idx = torch.randint(len(dataset), size=(1,)).item()
 
         # read out image and label from item
@@ -198,24 +173,24 @@ def plot_images(dataset, n=16):
         plt.imshow(img_valid_range)
 
     plt.show()
-plot_images(train_set)
+
+
+# plot_images(train_set)
 # get first item from dataset, the item is just a tuple
 
 first_item = train_set[0]
-
 
 
 ####### TODO #########
 
 # get image at index 0 and label at index 1 from the item
 
-image_tensor = 
+image_tensor = first_item[0]
 
-label = 
+label = first_item[1]
 
 
-
-# print the shape of the image tensor and the tensor 
+# print the shape of the image tensor and the tensor
 
 print(image_tensor)
 
@@ -226,13 +201,11 @@ print("Shape: ", image_tensor.shape)
 
 img_valid_range = np.clip(image_tensor.numpy().transpose((1, 2, 0)), 0, 1)
 
-plt.imshow(img_valid_range)
+# plt.imshow(img_valid_range)
 # get the output shape of our data after a convolution and pooling of a certain size
 
 
-
 def get_conv2d_out_shape(tensor_shape, conv, pool=2):
-
     # return the new shape of the tensor after a convolution and pooling
 
     # tensor_shape: (channels, height, width)
@@ -241,186 +214,163 @@ def get_conv2d_out_shape(tensor_shape, conv, pool=2):
 
     kernel_size = conv.kernel_size
 
-    stride=conv.stride # 2D array
+    stride = conv.stride  # 2D array
 
-    padding=conv.padding # 2D array
+    padding = conv.padding  # 2D array
 
-    dilation=conv.dilation # 2D array
+    dilation = conv.dilation  # 2D array
 
     out_channels = conv.out_channels
 
+    height_out = np.floor(
+        (tensor_shape[1] + 2 * padding[0] - dilation[0] * (kernel_size[0] - 1) - 1)
+        / stride[0]
+        + 1
+    )
 
-
-    height_out = np.floor((tensor_shape[1]+2*padding[0]-dilation[0]*(kernel_size[0]-1)-1)/stride[0]+1)
-
-    width_out = np.floor((tensor_shape[2]+2*padding[1]-dilation[1]*(kernel_size[1]-1)-1)/stride[1]+1)
-
-    
+    width_out = np.floor(
+        (tensor_shape[2] + 2 * padding[1] - dilation[1] * (kernel_size[1] - 1) - 1)
+        / stride[1]
+        + 1
+    )
 
     if pool:
-
         # adjust dimensions to pooling
 
-        height_out/=pool
+        height_out /= pool
 
-        width_out/=pool
+        width_out /= pool
 
-        
+    return int(out_channels), int(height_out), int(width_out)
 
-    return int(out_channels),int(height_out),int(width_out)
+
 # some simple tests
 
 t1 = torch.randn(3, 256, 256)
 
 t2 = torch.randn(5, 256, 256)
 
-conv1 = nn.Conv2d(in_channels=3, out_channels = 256, kernel_size=10)
+conv1 = nn.Conv2d(in_channels=3, out_channels=256, kernel_size=10)
 
-conv2 = nn.Conv2d(in_channels=3, out_channels = 64, kernel_size=4)
+conv2 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=4)
 
-conv3 = nn.Conv2d(in_channels=5, out_channels = 13, kernel_size=7)
+conv3 = nn.Conv2d(in_channels=5, out_channels=13, kernel_size=7)
 
 print(get_conv2d_out_shape(t1.shape, conv1, pool=2))
 
 print(get_conv2d_out_shape(t1.shape, conv2, pool=1))
 
-print(get_conv2d_out_shape(t2.shape ,conv3, pool=2))
+print(get_conv2d_out_shape(t2.shape, conv3, pool=2))
+
+
 class MRIModel(nn.Module):
-
-    
-
     # Network Initialisation
 
     def __init__(self, params):
-
-        
-
-        super(MRIModel, self).__init__() #initialize parent pytorch module
-
-
+        super(MRIModel, self).__init__()  # initialize parent pytorch module
 
         # read parameters
 
         shape_in = params["shape_in"]
 
-        channels_out = params["initial_depth"] 
+        channels_out = params["initial_depth"]
 
         fc1_size = params["fc1_size"]
 
-        
-
         #### Convolution Layers
-
-
 
         # Max pooling layer
 
         self.pool = nn.MaxPool2d(2, 2)
 
-
-
         ##conv layer 1
 
-        # convolution with kernel size 8, goes from three channels to 
+        # convolution with kernel size 8, goes from three channels to
 
         # number defined by initial_depth in params
 
         self.conv1 = nn.Conv2d(shape_in[0], channels_out, kernel_size=8)
 
-
-
         ############### TODO ################
 
         # get current shape after conv1, use helper function get_conv2d_out_shape, use pool=2
 
-        current_data_shape = 
-
-
+        current_data_shape = get_conv2d_out_shape(shape_in, self.conv1)
 
         ##conv layer 2
 
         # convolution with kernel size 4, double the amount of channels
 
-        self.conv2 = nn.Conv2d(current_data_shape[0], current_data_shape[0]*2, kernel_size=4)
+        self.conv2 = nn.Conv2d(
+            current_data_shape[0], current_data_shape[0] * 2, kernel_size=4
+        )
 
         # get current shape after conv2, use pool=2 again
 
-        current_data_shape = 
-
-
+        current_data_shape = get_conv2d_out_shape(current_data_shape, self.conv2)
 
         #### Fully connected layers
 
         # compute the flattened size as input for fully connected layer
 
-        flat_size = current_data_shape[0] * current_data_shape[1] * current_data_shape[2]
-
-        
+        flat_size = (
+            current_data_shape[0] * current_data_shape[1] * current_data_shape[2]
+        )
 
         # linear layer reduces data from flat_size to fc1_size
 
-        self.fc1 = 
+        self.fc1 = nn.Linear(flat_size, fc1_size)
 
         # last linear layer reduces data to output size 2
 
         self.fc2 = nn.Linear(fc1_size, 2)
 
-        
-
         #####################################
 
-        
-
-
-
-    def forward(self,X):
-
+    def forward(self, X):
+        print(X.shape)
         # our network's forward pass
-
-        
 
         # Convolution & Pool Layers
 
         ############# TODO ###############
 
-        # convolution (conv1), then relu, then max pool 
+        # convolution (conv1), then relu, then max pool
 
         X = F.relu(self.conv1(X))
 
         X = self.pool(X)
 
-        # convolution (conv2), then relu, then max pool 
+        # convolution (conv2), then relu, then max pool
 
-        X =
+        X = self.pool(F.relu(self.conv2(X)))
 
-
-
-        X = torch.flatten(X, 1) # flatten all dimensions except batch
-
-
+        X = torch.flatten(X, 1)  # flatten all dimensions except batch
 
         # fully connected layer and ReLU
 
-        X = 
+        X = F.relu(self.fc1(X))
 
         # second fully connected layer, no relu needed
 
-        X = 
-
-
+        X = self.fc2(X)
 
         #####################################
 
         # return log softmax to fit classification problem, no relu needed
 
         return F.log_softmax(X, dim=1)
+
+
 # take first batch from the train loader
 
 batch = next(iter(train_loader))[0]
 
 # create the model
 
-cnn_model = MRIModel(params={"shape_in":batch[0].shape,"initial_depth":4,"fc1_size":128})
+cnn_model = MRIModel(
+    params={"shape_in": batch[0].shape, "initial_depth": 4, "fc1_size": 128}
+)
 
 # forward pass
 
@@ -437,10 +387,10 @@ print("Shape of the output: ", out.shape)
 # prediction output for first image, exp to get from log back to probabilities
 
 print(torch.exp(out[0].detach()))
+
+
 class LitMRIModel(L.LightningModule):
-
     def __init__(self, model_parameters, learning_rate=1e-2):
-
         super().__init__()
 
         ######## TODO ##########
@@ -449,9 +399,9 @@ class LitMRIModel(L.LightningModule):
 
         self.model = MRIModel(model_parameters)
 
-        #pass the learning rate
+        # pass the learning rate
 
-        self.lr = 
+        self.lr = learning_rate
 
         # define loss function
 
@@ -459,43 +409,34 @@ class LitMRIModel(L.LightningModule):
 
         # define accuracy metric (torchmetrics)
 
-        self.accuracy = torchmetrics.classification.Accuracy(task="multiclass", num_classes=2)
+        self.accuracy = torchmetrics.classification.Accuracy(
+            task="multiclass", num_classes=2
+        )
 
         ########################
 
-
-
     def training_step(self, batch, batch_idx):
-
         # training_step defines the train loop.
 
         ######### TODO #############
 
-        
-
         # read from batch
 
-        x, y = 
-
-
+        x, y = batch[batch_idx][:, 0], batch[batch_idx][:, 1]
 
         # run data through model
-
-        predictions = 
-
-        
+        print(x.shape)
+        predictions = self.model(x)
 
         # compute loss
 
-        loss = 
+        loss = self.loss_function(predictions, y)
 
         # compute accuracy
 
-        acc = 
+        acc = predictions.shape[0] - torch.logical_xor(predictions, y).sum()
 
         ##############################
-
-
 
         # logging the values (will appear in progress bar and on dashboard)
 
@@ -503,57 +444,41 @@ class LitMRIModel(L.LightningModule):
 
         self.log("train_acc", acc, on_epoch=True, prog_bar=True)
 
-
-
         return loss
 
-
-
     def configure_optimizers(self):
-
         ############## TODO ################
 
         # define the optimizer, let's use Adam
 
-        optimizer = 
+        optimizer = torch.optim.Adam(self.model.parameters(), self.lr)
 
         ####################################
 
         return optimizer
 
-
-
     def test_step(self, batch, batch_idx):
-
         # this is the test loop
-
-
 
         ############### TODO #############
 
         # read from batch
 
-        x, y = 
-
-
+        x, y = batch[batch_idx][:, 0], batch[batch_idx][:, 1]
 
         # run data through model
 
-        predictions = 
-
-        
+        predictions = self.model(x)
 
         # compute loss
 
-        loss = 
+        loss = self.loss_function(predictions, y)
 
         # compute accuracy
 
-        acc = 
+        acc = predictions.shape[0] - torch.logical_xor(predictions, y)
 
         ##############################
-
-
 
         # logging
 
@@ -563,39 +488,28 @@ class LitMRIModel(L.LightningModule):
 
         return loss, acc
 
-
-
-
-
     def validation_step(self, batch, batch_idx):
-
         # this is the validation loop
 
         ############### TODO #############
 
         # read from batch
 
-        x, y = 
-
-
+        x, y = batch[batch_idx][:, 0], batch[batch_idx][:, 1]
 
         # run data through model
 
-        predictions = 
-
-        
+        predictions = self.model(x)
 
         # compute loss
 
-        loss = 
+        loss = self.loss_function(predictions, y)
 
         # compute accuracy
 
-        acc = 
+        acc = predictions.shape[0] - torch.logical_xor(predictions, y)
 
         ##############################
-
-
 
         # logging
 
@@ -603,34 +517,32 @@ class LitMRIModel(L.LightningModule):
 
         self.log("val_acc", acc, on_epoch=True, prog_bar=True)
 
-        return loss 
+        return loss
 
-# create a tensorboard session
+
+# # create a tensorboard session
 
 # new tab should open in your browser
 
 # define parameters
 
-model_parameters={
-
-        "shape_in": (3,256,256), # size of our images
-
-        "initial_depth": 4,    
-
-        "fc1_size": 128}
+model_parameters = {
+    "shape_in": (3, 256, 256),  # size of our images
+    "initial_depth": 4,
+    "fc1_size": 128,
+}
 # train model
 
 ########## TODO #############
 
 # instantiate lightning model with the cnn_model and learning_rate=1e-3
 
-model = 
+model = LitMRIModel(model_parameters, 1e-3)
 
 ############################
 
 
-
-# instantiate the lightning trainer 
+# instantiate the lightning trainer
 
 trainer = L.Trainer(max_epochs=20, log_every_n_steps=1)
 
@@ -643,24 +555,19 @@ trainer.validate(model, val_loader)
 from sklearn.metrics import classification_report, confusion_matrix
 
 
-
 # get the predictions and plot a confusion matrix
-
 
 
 # function to retrieve the predictions of the model and return them with the true labels
 
-def get_predictions(val_loader, model):
 
+def get_predictions(val_loader, model):
     y_true = []
 
     y_pred = []
 
-
-
     for images, labels in val_loader:
-
-        images = images#.to(device)
+        images = images  # .to(device)
 
         labels = labels.numpy()
 
@@ -670,34 +577,27 @@ def get_predictions(val_loader, model):
 
         pred = pred.detach().cpu().numpy()
 
-        
-
         y_true = np.append(y_true, labels)
 
         y_pred = np.append(y_pred, pred)
 
-    
-
     return y_true, y_pred
-
 
 
 ########## TODO #############
 
 # get predictions from the cnn_model on the val_loader
 
-y_true, y_pred = 
+y_true, y_pred = get_predictions(val_loader, cnn_model)
 
 ############################
 
 
-
 # print summary
 
-print(classification_report(y_true, y_pred), '\n\n')
+print(classification_report(y_true, y_pred), "\n\n")
 
 cm = confusion_matrix(y_true, y_pred)
-
 
 
 sns.heatmap(cm, annot=True)
@@ -706,20 +606,16 @@ sns.heatmap(cm, annot=True)
 from sklearn.metrics import roc_curve, auc
 
 
-
 # get predictions (as probabilities)
 
-def get_prediction_probs(val_loader, model):
 
+def get_prediction_probs(val_loader, model):
     y_true = []
 
     y_pred = []
 
-
-
     for images, labels in val_loader:
-
-        images = images#.to(device)
+        images = images  # .to(device)
 
         labels = labels.numpy()
 
@@ -727,26 +623,20 @@ def get_prediction_probs(val_loader, model):
 
         # exp() because we use log softmax as last layer
 
-        # get the probabilities for tomor class 
+        # get the probabilities for tomor class
 
-        prediction_probabilities = torch.exp(outputs)[:,1] 
+        prediction_probabilities = torch.exp(outputs)[:, 1]
 
         pred = prediction_probabilities.detach().cpu().numpy()
-
-    
 
         y_true = np.append(y_true, labels)
 
         y_pred = np.append(y_pred, pred)
 
-    
-
     return y_true, y_pred
 
 
-
 y_true, y_pred_probabilities = get_prediction_probs(val_loader, model)
-
 
 
 ########## TODO #############
@@ -755,21 +645,20 @@ y_true, y_pred_probabilities = get_prediction_probs(val_loader, model)
 
 # use sklearn roc_curve and auc functions
 
-fpr, tpr, _ = 
+fpr, tpr, _ = roc_curve(y_true, y_pred_probabilities)
 
-roc_auc = au
+roc_auc = auc(fpr, tpr)
 
 ##############################
-
 
 
 # Plot ROC curve
 
 plt.figure()
 
-plt.plot(fpr, tpr, lw=2, label='AUC = %0.2f' % roc_auc)
+plt.plot(fpr, tpr, lw=2, label="AUC = %0.2f" % roc_auc)
 
-plt.plot([0, 1], [0, 1], lw=2, linestyle='--', color="grey")
+plt.plot([0, 1], [0, 1], lw=2, linestyle="--", color="grey")
 
 plt.legend()
 # train a model with a large learning rate (e.g. 1e-1)
@@ -777,19 +666,18 @@ plt.legend()
 # make sure to name your lightning model variable in a way to not overwrite the previously trained model
 
 
-
 ########## TODO #############
 
 # instantiate lightning model
 
-model_large_lr = 
+model_large_lr = LitMRIModel(model_parameters, 1e-1)
 
 # define trainer, 20 epochs
 
-trainer =
+trainer = L.Trainer(max_epochs=20, log_every_n_steps=1)
+
 
 # train
-
 
 
 ##############################
@@ -797,19 +685,18 @@ trainer =
 # train a model with a small learning rate (e.g. 1e-5)
 
 
-
 ########## TODO #############
 
 # instantiate lightning model
 
-model_small_lr = 
+model_small_lr = LitMRIModel(model_parameters, 1e-5)
 
 # define trainer, 20 epochs
 
-trainer =
+trainer = L.Trainer(max_epochs=20, log_every_n_steps=1)
+
 
 # train
-
 
 
 ##############################
@@ -818,18 +705,18 @@ trainer =
 model_small_batches = LitMRIModel(model_parameters, learning_rate=1e-3)
 
 
-
 #### TODO ####
 
 ## create train dataloader with a small batch size
 
-train_loader_small = 
-
+train_loader_small = DataLoader(
+    train_set, batch_size=int(batch_size / 2), shuffle=False, num_workers=16
+)
 
 
 # train model
 
-trainer =
+trainer = L.Trainer(max_epochs=20, log_every_n_steps=1)
 
 # train with smaller batch size
 
@@ -838,18 +725,18 @@ trainer =
 model_big_batches = LitMRIModel(model_parameters, learning_rate=1e-3)
 
 
-
 #### TODO ####
 
 # train with a large batch size, what's the largest batch size you can use?
 
-train_loader_big = 
-
+train_loader_big = DataLoader(
+    train_set, batch_size=int(batch_size * 2), shuffle=False, num_workers=16
+)
 
 
 # train model
 
-trainer = 
+trainer = L.Trainer(max_epochs=20, log_every_n_steps=1)
 
 # train
 
@@ -858,20 +745,19 @@ trainer =
 model_long_training = LitMRIModel(model_parameters, learning_rate=1e-3)
 
 
-
 # train the model for 100 epochs
 
-trainer = 
+trainer = L.Trainer(max_epochs=20, log_every_n_steps=1)
 
 # train on train_loader again
 
 ################# TODO ##################
 
-# create a more complex model 
+# create a more complex model
 
 ################# TODO ##################
 
-# train 
+# train
 ################# TODO ##################
 
 # validate
@@ -879,8 +765,7 @@ trainer =
 
 # pass the best performing model here
 
-best_model =
-
+best_model = model_small_lr
 
 
 # test your best performing model on the test set
@@ -888,19 +773,16 @@ best_model =
 trainer.test(best_model, test_loader)
 
 
-
 # print the confusion matrix and classification report
 
-y_true, y_pred = 
+y_true, y_pred = get_predictions(val_loader, best_model)
 
 
-
-print(classification_report(y_true, y_pred), '\n\n')
+print(classification_report(y_true, y_pred), "\n\n")
 
 # confusion matrix
 
-cm = 
-
+# cm = sns
 
 
 sns.heatmap(cm, annot=True)
