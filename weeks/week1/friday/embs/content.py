@@ -1,8 +1,5 @@
 # Uncomment & execute once to download data
 
-#!mkdir -p data
-
-#!curl https://alphafold.ebi.ac.uk/files/AF-P35557-F1-model_v4.pdb > data/AF-P35557-F1-model_v4.pdb
 import itertools, numpy as np, pandas as pd, sklearn as sk, sklearn.preprocessing, sklearn.metrics, sklearn.naive_bayes
 
 import matplotlib, matplotlib.colors, matplotlib.pyplot as plt, seaborn as sns
@@ -23,7 +20,9 @@ n_esm_parameters = 0
 
 for layer in esm_model.encoder.layer:
 
-    n_esm_parameters += layer.intermediate.dense.weight.shape.numel()
+    n_esm_parameters += layer.intermediate.dense.weight.shape.numel() + layer.intermediate.dense.bias.shape.numel()
+
+print(esm_model.num_parameters())
 
 print(n_esm_parameters)
 # Sequence for GCK glucokinase (P35557), see Figure 3F in https://www.science.org/doi/10.1126/science.adg7492#sec-5
@@ -36,11 +35,11 @@ print(seq)
 
 # Mask residue at pos
 
-pos = 2
+pos = 205
 
 seq_masked = seq[:pos] + '<mask>' + seq[pos + 1:]
 
-print(seq_masked)
+print("\n", seq_masked)
 
 
 
@@ -65,9 +64,13 @@ print(len(resid_binding_sites), 'residues in binding sites')
 
 cmap = matplotlib.colormaps['cividis']
 
-color_pos = matplotlib.colors.to_hex(cmap(255))
+color_alpha = matplotlib.colors.to_hex(cmap(255))
 
-color_neg = matplotlib.colors.to_hex(cmap(0))
+color_beta = matplotlib.colors.to_hex(cmap(175))
+
+color_binding = matplotlib.colors.to_hex(cmap(75))
+
+color_null = matplotlib.colors.to_hex(cmap(0))
 
 view = py3Dmol.view()
 
@@ -81,7 +84,7 @@ view.setStyle({
 
             'prop': 'resi',
 
-            'map': { resi + 1: color_pos if resi + 1 in resid_alpha_helix else color_neg for resi in range(len(seq)) },
+            'map': { resi + 1: color_alpha if resi + 1 in resid_alpha_helix else color_beta if resi + 1 in resid_beta_sheet else color_binding if resi + 1 in resid_binding_sites else color_null for resi in range(len(seq)) },
 
         },
 
@@ -100,21 +103,25 @@ tokens = unmasker.tokenizer(seq, return_tensors='pt').to('cuda')
 
 outputs = unmasker.model(tokens['input_ids'], attention_mask=tokens['attention_mask'], output_hidden_states=True,)
 dir(outputs)
-#def get_layer_from_output(layer_id):
+def get_layer_from_output(layer_id):
 
-#    return ...
+    return outputs.hidden_states[layer_id]
 
 
 
 def get_embedding_from_output(layer_id, embedding_id):
 
-    #... = get_layer_from_output(...)
+    layer = get_layer_from_output(layer_id)
 
-    return [-1, 1] * int(len(seq) / 2)
+    #print(dir(layer))
+
+    print(layer.shape)
+
+    return layer[-1, :, embedding_id].cpu().detach().numpy()#[-1, 1] * int(len(seq) / 2)
 
 
 
-#get_embedding_from_output(2, 3)
+get_embedding_from_output(2, 3)
 def get_colors(values):
 
     rescaled = matplotlib.colors.Normalize(vmin=min(values), vmax=max(values))(values)
@@ -137,7 +144,7 @@ view.setStyle({
 
             'prop': 'resi',
 
-            'map': get_colors(get_embedding_from_output(0, 1)),
+            'map': get_colors(get_embedding_from_output(5, 22)),
 
         },
 
@@ -174,9 +181,11 @@ for layer_id in range(7):
 
     X = get_layer_from_output(layer_id)
 
+    #print(len(y_true_alpha_helix), X.shape)
 
+    #print(X[:, 1:-1, 0], len(y_true_alpha_helix))
 
-    auc_alpha_helix = np.array([sk.metrics.roc_auc_score(y_true=y_true_alpha_helix, y_score=X[:,i]) for i in range(X.shape[1]) ])
+    auc_alpha_helix = np.array([sk.metrics.roc_auc_score(y_true=y_true_alpha_helix, y_score=X[:, 1:-1,i].cpu().detach().reshape(-1, 1).numpy(), multi_class = "raise") for i in range(X.shape[2]) ])
 
     score_alpha_helix = sum(auc_alpha_helix > auc_threshold)
 
@@ -186,9 +195,27 @@ for layer_id in range(7):
 
     # ...
 
+    auc_beta_sheet = np.array([sk.metrics.roc_auc_score(y_true=y_true_beta_sheet, y_score=X[:, 1:-1,i].cpu().detach().reshape(-1, 1).numpy(), multi_class = "raise") for i in range(X.shape[2]) ])
+
+    score_beta_sheet = sum(auc_beta_sheet > auc_threshold)
+
+    print('Best auc_beta_sheet:', max(auc_beta_sheet), np.argmax(auc_beta_sheet))
+
+
+
+    auc_binding = np.array([sk.metrics.roc_auc_score(y_true=y_true_binding_sites, y_score=X[:, 1:-1,i].cpu().detach().reshape(-1, 1).numpy(), multi_class = "raise") for i in range(X.shape[2]) ])
+
+    score_binding = sum(auc_binding > auc_threshold)
+
+    print('Best auc_binding_site:', max(auc_binding), np.argmax(auc_binding))
+
 
 
     scores_alpha_helix.append(score_alpha_helix)
+
+    scores_beta_sheet.append(score_beta_sheet)
+
+    scores_binding_sites.append(score_binding)
 
     # ...
 
@@ -197,6 +224,12 @@ for layer_id in range(7):
 layers = [1, 2, 3, 4, 5, 6, 7]
 
 centre_alpha_helix = np.average(layers, weights=scores_alpha_helix)
+
+centre_beta_sheet = np.average(layers, weights=scores_beta_sheet)
+
+centre_binding_sites = np.average(layers, weights=scores_binding_sites)
+
+
 
 
 
@@ -219,6 +252,10 @@ plt.subplot(3, 1, 2)
 
 # ...
 
+plt.bar(layers, scores_beta_sheet)
+
+plt.axvline(centre_beta_sheet, color='tab:red', linewidth=3)
+
 plt.gca().set_ylabel('Beta sheet')
 
 
@@ -226,6 +263,10 @@ plt.gca().set_ylabel('Beta sheet')
 plt.subplot(3, 1, 3)
 
 # ...
+
+plt.bar(layers, scores_binding_sites)
+
+plt.axvline(centre_binding_sites, color='tab:red', linewidth=3)
 
 plt.gca().set_ylabel('Binding site')
 

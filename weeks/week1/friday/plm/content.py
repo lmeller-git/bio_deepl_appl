@@ -9,9 +9,6 @@ from IPython.display import display, HTML
 random_number = 4 # https://xkcd.com/221/
 # Uncomment & execute once to download data from https://services.healthtech.dtu.dk/services/DeepLocPro-1.0/
 
-#!mkdir -p data
-
-#!curl https://services.healthtech.dtu.dk/services/DeepLocPro-1.0/data/graphpart_set.fasta -o data/graphpart_set.fasta
 with open('data/graphpart_set.fasta') as handle:
 
     fasta_cols = ['header', 'sequence']
@@ -128,9 +125,9 @@ trainer_args = transformers.TrainingArguments(
 
     # Adjust if needed
 
-    #per_device_train_batch_size,
+    per_device_train_batch_size=4,
 
-    #per_device_eval_batch_size,
+    per_device_eval_batch_size=4,
 
 )
 
@@ -168,10 +165,26 @@ test_labels = np.argmax(retrained_predict.predictions, axis=-1)
 
 print(sum(test_labels == test_dataset['labels']) / len(test_dataset))
 
-print("test_labels = ", test_labels)
+print("test_labels
+ = ", test_labels
+)
 fold_id = set(df_data.fold_id)
 
 predicted_labels = []
+
+
+
+def weight_reset(m):
+
+    reset_parameters = getattr(m, "reset_parameters", None)
+
+    if callable(reset_parameters):
+
+        m.reset_parameters()
+
+
+
+        
 
 for test_id in sorted(fold_id):
 
@@ -192,6 +205,42 @@ for test_id in sorted(fold_id):
 
 
     # ...
+
+    train_tokenized = tokenizer(df_train['sequence'].tolist(), truncation=True, max_length=1024)
+
+    eval_tokenized = tokenizer(df_eval['sequence'].tolist(), truncation=True, max_length=1024)
+
+    test_tokenized = tokenizer(df_test['sequence'].tolist(), truncation=True, max_length=1024)
+
+    
+
+    train_dataset = datasets.Dataset.from_dict(train_tokenized).add_column('labels', df_train['label'].tolist())
+
+    eval_dataset = datasets.Dataset.from_dict(eval_tokenized).add_column('labels', df_eval['label'].tolist())
+
+    test_dataset = datasets.Dataset.from_dict(test_tokenized).add_column('labels', df_test['label'].tolist())
+
+    model = transformers.AutoModelForSequenceClassification.from_pretrained(model_checkpoint, num_labels=df_data['label'].nunique())
+
+    weight_reset(model)
+
+    trainer = transformers.Trainer(
+
+        model,
+
+        trainer_args,
+
+        train_dataset=train_dataset,
+
+        eval_dataset=eval_dataset,
+
+        tokenizer=tokenizer,
+
+        compute_metrics=compute_metrics,
+
+    )
+
+    trainer.train()
 
 
 
