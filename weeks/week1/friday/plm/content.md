@@ -1,0 +1,8 @@
+# Fine-tuning protein language models  
+**Q6.** Describe the problem of predicting the subcellular location of (prokaryotic) proteins as described in [Moreno et al., 2024](https://doi.org/10.1093/bioinformatics/btae677)? Think of a biological question one could answer with proteome-wide predictions of subcellular location, and potential follow-up experiments?  
+**Q7.** Look at the contents of `df_data`, how was the column `fold_id` defined in the paper? What exact set of sequences are in this data set (check number of rows)?   
+**Q8.** How were the data partitioned during training and evaluation in the paper? What does the code below do, and how does it compare to the approach taken in the paper?  
+**Q9.** There's a warning about uninitialized weights when loading the ESM-2 model using `AutoModelForSequenceClassification` below. Describe the part of the network that has the uninitialized weights. How does the new part connect to the rest?  
+**Q10.** The fine-tuning may fail by running out of GPU memory. Look up `per_device_train_batch_size` and `per_device_eval_batch_size` in the [TrainingArguments docs](https://huggingface.co/docs/transformers/v4.49.0/en/main_classes/trainer#transformers.TrainingArguments). How would you adjust these parameters to use less GPU memory?  
+**Q11.** Adjust the code below to re-produce the cross-validation results as in Table 2 of the paper. Fine-tune+test separately on every fold, and gather the results in `predicted_labels`.  
+**Q12.** Discuss differences between the methodology and the resulting performance of the approach taken in the paper, and the reproduction.  
