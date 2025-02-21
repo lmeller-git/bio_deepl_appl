@@ -40,6 +40,8 @@ import Bio
 
 from Bio import SeqIO
 
+torch.set_default_dtype(torch.float16)
+
 
 
 # download and unpack DNA coding sequences for human, mouse and yeast
@@ -157,11 +159,17 @@ class Language:
 
         self.codon_length = codon_len
 
+        self.max_len = 0
+
 
 
     # function to add sentence to language (add new words in the sentence to our language)
 
     def addSentence(self, sentence):
+
+        if len(sentence) > self.max_len:
+
+            self.max_len = len(sentence)
 
         for word in [sentence[i:i+self.codon_length] for i in range(0, len(sentence), self.codon_length)]:
 
@@ -231,7 +239,7 @@ class Language:
 
         sentence_encoded = [self.encoding[word] for word in sentence_split]
 
-
+        max_len = round(max_len if max_len is not None else self.max_len / self.codon_length)
 
         # only pad or truncate if a maximum length is specified
 
@@ -243,7 +251,7 @@ class Language:
 
                 n_pads = max_len - 2 - len(sentence_split)
 
-                return torch.Tensor(np.array(sos + sentence_encoded + eos + pad * n_pads))
+                return torch.Tensor(np.array(sos + sentence_encoded + eos + pad * n_pads, dtype = np.float16))
 
             else: 
 
@@ -251,7 +259,7 @@ class Language:
 
                 sentence_truncated = sentence_encoded[:max_len - 2]
 
-                return torch.Tensor(np.array(sos + sentence_truncated + eos))
+                return torch.Tensor(np.array(sos + sentence_truncated + eos, dtype = np.float16))
 
         else:
 
@@ -277,7 +285,7 @@ prot_lang = Language(name="prot", codon_len=1)
 
 # think about how much data would realistically be necessary to learn the problem of translating DNA sequences
 
-train_set, val_set, test_set = torch.utils.data.random_split(..., ...)
+train_set, val_set, test_set = torch.utils.data.random_split(seq_data, [0.7, 0.15, 0.15])
 
 
 
@@ -295,9 +303,15 @@ for cur_seq in train_set:
 
 # call the appropriate functions for each of the two languages
 
-dna_lang.FUNCTION_CALL()
+dna_lang.as_one_hot()
 
-prot_lang.FUNCTION_CALL()
+prot_lang.as_one_hot()
+
+
+
+print(dna_lang.max_len)
+
+print(prot_lang.max_len)
 
 
 
@@ -334,23 +348,23 @@ def encode_dataset(dataset, dna_lang, prot_lang, max_length):
 
 # think about a sensible length for the input sequences
 
-max_length = ...
+max_length = 42
 
 
 
 # encode the training and validation data
 
-train_set_encoded = FUNCTION_CALL(..., dna_lang, prot_lang, ...)
+train_set_encoded = encode_dataset(train_set, dna_lang, prot_lang, max_length)
 
-val_set_encoded = FUNCTION_CALL(..., dna_lang, prot_lang, ...)
+val_set_encoded = encode_dataset(val_set, dna_lang, prot_lang, max_length)
 
-
+print(train_set_encoded[0]['dna'].shape)
 
 # take a look at the encoding of a DNA
 
 train_set[0]['dna'], train_set_encoded[0]['dna']
 
-
+print(train_set_encoded[0]['prot'].shape)
 
 # take a look at the encoding of a protein
 
@@ -379,15 +393,15 @@ def get_dataloader(dataset, batch_size):
 
 # how many samples should be trained on simultaneously?
 
-batch_size = ...
+batch_size = 20
 
 
 
 # define dataloader for training
 
-train_loader = FUNCTION_CALL(..., ...)
+train_loader = get_dataloader(train_set_encoded, batch_size)
 
-val_loader = FUNCTION_CALL(..., ...)
+val_loader = get_dataloader(val_set_encoded, batch_size)
 
 
 
@@ -407,47 +421,29 @@ class MyLSTM(nn.Module):
 
         super(MyLSTM,self).__init__()
 
-        
-
-        # input parameters
-
-        # ...
-
-        # ...
-
-        # ...
 
 
+        self.l1 = nn.LSTM(input_size, hidden_size, batch_first=True)
 
-        # define model layers (LSTM), pseudocode:
+        self.act =  nn.Identity()#nn.ReLU()
 
-        self.LSTM = nn.LSTM(input_1, ..., input_k, batch_first = True)
+        self.l2 = nn.LSTM(hidden_size, hidden_size, batch_first=True)
 
-        # ...
+        self.l3 = nn.LSTM(hidden_size, output_size, batch_first=True)
 
 
 
     def forward(self,inp):
 
-        inp1 = inp.to(device)
+        #print(inp.shape)
 
-        
+        inp.to(device)
 
-        # define initial hidden and cell states of LSTM, e.g.:
+        output, (hn2, cn2) = self.l2(self.act(output))
 
-        # HIDDEN = torch.zeros(1, inp1.size(0), ...).double().to(inp.device)
+        output, (hn3, cn3) = self.l3(self.act(output))
 
-        # ...
-
-        
-
-        # run LSTM, pseudocode:
-
-        output_1, ..., output_n = self.LSTM(input_1, ..., input_m) 
-
-        
-
-        return output
+        return output #nn.Softmax()(output)
 
         
 ########################
@@ -472,7 +468,7 @@ class SequenceModelLightning(L.LightningModule):
 
         # define loss function here, pseudocode:
 
-        self.loss = nn.MY_LOSS_FUNCTION()
+        self.loss = nn.CrossEntropyLoss()
 
 
 
@@ -484,15 +480,15 @@ class SequenceModelLightning(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        input_tensor = batch[0].double()
+        input_tensor = batch["dna"].double()
 
-        target_tensor = batch[1].double()
+        target_tensor = batch["prot"].double()
 
 
 
         output = self.model(input_tensor)
 
-        loss = self.loss(output.view(-1, output.shape[2]),target_tensor.view(-1).long())
+        loss = self.loss(output,target_tensor)
 
         self.log("train_loss", loss, prog_bar=True)
 
@@ -502,15 +498,19 @@ class SequenceModelLightning(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
 
-        input_tensor = batch[0].double()
+        input_tensor = batch["dna"].double()
 
-        target_tensor = batch[1].double()
+        target_tensor = batch["prot"].double()
 
 
 
         output = self.model(input_tensor)
 
-        loss = self.loss(output.view(-1, output.shape[2]),target_tensor.view(-1).long())
+        #print(output.shape, target_tensor.shape)
+
+        #print(output.view(-1, output.shape[2]).shape, target_tensor.view(-1).long().shape)
+
+        loss = self.loss(output,target_tensor)
 
         self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
@@ -522,7 +522,7 @@ class SequenceModelLightning(L.LightningModule):
 
         # define optimizer here
 
-        return MY_OPTIMIZER_CALL()
+        return torch.optim.Adam(self.model.parameters(), self.lr)
 
     
 ########################
@@ -537,13 +537,13 @@ class SequenceModelLightning(L.LightningModule):
 
 # think of the dimensionality of your input data (dna sequences) and output data (protein sequence), and where these numbers are stored
 
-lit_model = SequenceModelLightning(input_size = ...,
+lit_model = SequenceModelLightning(input_size = 67,
 
-                                  hidden_size = ...,
+                                  hidden_size = 200,
 
-                                  output_size = ...,
+                                  output_size = 24,
 
-                                  lr = ...)
+                                  lr = 8e-3)
 
 
 
@@ -551,14 +551,18 @@ lit_model = SequenceModelLightning(input_size = ...,
 
 trainer = L.Trainer(devices = 1, 
 
-                    max_epochs = ...)
+                    max_epochs = 15)
 
 
 
 # learn the weights of the model
 
+print("traininig")
+
 trainer.fit(lit_model, train_loader, val_loader)
 
+print("done")
+print("done")
 
 
 # evaluate the performance of your model on the validation data
@@ -608,15 +612,19 @@ protein_translation = test_set[random_pair]['prot']
 
 my_lstm.cuda()
 
-input_tensor = ...
+input_tensor = torch.from_numpy(dna_sequence).to(device).double()
 
-output = ...
+output = my_lstm(input_tensor)
 
-
+print(output.shape)
 
 # convert output back to protein sequence by taking the most likely amino acid per position, print results
 
 result = "".join([prot_lang.index2word[i] for i in output.cpu().topk(1)[1].view(-1).numpy()])
+
+
+
+print(len(result))
 
 print('     '+protein_translation)
 
