@@ -123,7 +123,6 @@ train_set, val_set, test_set = torch.utils.data.random_split(
 
 
 # define the dataloaders for train, validation and test (use shuffle for train only)
-
 batch_size_train = 256
 
 batch_size = 128  # for eval and test
