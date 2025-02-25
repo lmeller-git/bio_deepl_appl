@@ -97,17 +97,17 @@ def model():
     pass
 
 
-def load_df():
+def load_df(p: str):
     dataset_train = ProtEmbeddingDataset(
-        "project_data/mega_train_embeddings", "project_data/mega_train.csv"
+        p + "project_data/mega_train_embeddings", p + "project_data/mega_train.csv"
     )
 
     dataset_val = ProtEmbeddingDataset(
-        "project_data/mega_val_embeddings", "project_data/mega_val.csv"
+        p + "project_data/mega_val_embeddings", p + "project_data/mega_val.csv"
     )
 
     dataset_test = ProtEmbeddingDataset(
-        "project_data/mega_test_embeddings", "project_data/mega_test.csv"
+        p + "project_data/mega_test_embeddings", p + "project_data/mega_test.csv"
     )
 
     dataloader_train = DataLoader(
