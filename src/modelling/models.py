@@ -2,7 +2,7 @@ from torch import nn
 import torch
 
 
-class BasicMLP:
+class BasicMLP(nn.Module):
     def __init__(self, in_shape: int):
         super().__init__()
         self.input = self.block(in_shape, 100)

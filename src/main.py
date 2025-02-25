@@ -1,4 +1,4 @@
-from modelling import train, TrainParams, BasicMLP
+from src import train, TrainParams, BasicMLP
 from argparse import ArgumentParser
 
 
