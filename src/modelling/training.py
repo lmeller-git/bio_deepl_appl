@@ -3,7 +3,6 @@ from torch import nn
 from sklearn.model_selection import KFold
 from tqdm import tqdm
 from src.given_utils import load_df
-from models import BasicMLP
 
 global DEVICE
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
