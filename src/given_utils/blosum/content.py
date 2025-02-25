@@ -1,5 +1,3 @@
-import os 
-
 import numpy as np
 
 import pandas as pd
@@ -9,6 +7,7 @@ import scipy
 import sklearn.metrics as skmetrics
 
 
+from Bio.Align import substitution_matrices
 
 # plotting
 
@@ -17,44 +16,29 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-
 # Pytorch
 
 import torch
 
-import torch.nn as nn
-
-import torch.nn.functional as F
-
-import torch.optim as optim
-
 from torch.utils.data import DataLoader, Dataset
 
-import lightning as L
 
+aa_alphabet = "ACDEFGHIKLMNPQRSTVWY"  # amino acid alphabet
 
-
-import torchmetrics
-
-from torchmetrics.regression import PearsonCorrCoef
-
-
-aa_alphabet = 'ACDEFGHIKLMNPQRSTVWY' # amino acid alphabet
-
-aa_to_int = {aa: i for i, aa in enumerate(aa_alphabet)} # mapping from amino acid to number
-
+aa_to_int = {
+    aa: i for i, aa in enumerate(aa_alphabet)
+}  # mapping from amino acid to number
 
 
 # function to one hot encode sequence
 
-def one_hot_encode(sequence):
 
+def one_hot_encode(sequence):
     # initialize a zero matrix of shape (len(sequence), len(amino_acids))
 
     one_hot = torch.zeros(len(sequence), len(aa_alphabet))
 
     for i, aa in enumerate(sequence):
-
         # set the column corresponding to the amino acid to 1
 
         one_hot[i].scatter_(0, torch.tensor([aa_to_int[aa]]), 1)
@@ -62,18 +46,14 @@ def one_hot_encode(sequence):
     return one_hot
 
 
-
-
-
 # sequence data, comes already batched, so treat accordingly in dataloader (batch_size=1)
 
+
 class SequenceData(Dataset):
-
     def __init__(self, csv_file, label_col="ddG_ML"):
-
         """
 
-        Initializes the dataset. 
+        Initializes the dataset.
 
         input:
 
@@ -87,15 +67,17 @@ class SequenceData(Dataset):
 
         # only have mutation rows
 
-        self.df = self.df[self.df.mut_type!="wt"]
+        self.df = self.df[self.df.mut_type != "wt"]
 
         # process the mutation row
 
-        self.df["mutation_pos"] = self.df["mut_type"].apply(lambda x: int(x[1:-1])-1) # make position start at zero
+        self.df["mutation_pos"] = self.df["mut_type"].apply(
+            lambda x: int(x[1:-1]) - 1
+        )  # make position start at zero
 
-        self.df["mutation_to"] = self.df["mut_type"].apply(lambda x: aa_to_int[x[-1]]) # give numerical label to mutation
-
-
+        self.df["mutation_to"] = self.df["mut_type"].apply(
+            lambda x: aa_to_int[x[-1]]
+        )  # give numerical label to mutation
 
         # group by wild type
 
@@ -105,16 +87,10 @@ class SequenceData(Dataset):
 
         self.wt_names = self.df.index.values
 
-
-
     def __len__(self):
-
         return len(self.df)
 
-
-
     def __getitem__(self, idx):
-
         # get the wild type name
 
         wt_name = self.wt_names[idx]
@@ -127,13 +103,11 @@ class SequenceData(Dataset):
 
         seq = mut_row["wt_seq"][0]
 
-
-
         # create mask and target tensors
 
-        mask = torch.zeros((1, len(seq),20)) # will be 1 where we have a measurement
+        mask = torch.zeros((1, len(seq), 20))  # will be 1 where we have a measurement
 
-        target = torch.zeros((1, len(seq),20)) # ddg values
+        target = torch.zeros((1, len(seq), 20))  # ddg values
 
         # all mutations from df
 
@@ -145,86 +119,63 @@ class SequenceData(Dataset):
 
         labels = torch.tensor(mut_row[self.label_col])
 
-
-
         for i in range(len(seq)):
+            mask[0, i, amino_acids[positions == i]] = 1  # one where we have data
 
-            mask[0,i,amino_acids[positions==i]] = 1 # one where we have data
+            target[0, i, amino_acids[positions == i]] = labels[
+                positions == i
+            ]  # fill with ddG values
 
-            target[0,i,amino_acids[positions==i]] = labels[positions==i] # fill with ddG values
-
-        
-
-        # returns encoded sequence, mask and target sequence 
+        # returns encoded sequence, mask and target sequence
 
         return {"sequence": seq, "mask": mask, "labels": target}
 
-def load_df():
-    dataset_test = SequenceData('project_data/mega_test.csv')
 
-    dataloader_test = DataLoader(dataset_test, batch_size=1, shuffle=False)
-    # naive benchmark
+dataset_test = SequenceData("project_data/mega_test.csv")
 
-    # just use BLOSUM62 matrix to approximate ddG changes
+dataloader_test = DataLoader(dataset_test, batch_size=1, shuffle=False)
+# naive benchmark
 
-    from Bio.Align import substitution_matrices
+# just use BLOSUM62 matrix to approximate ddG changes
 
-    substitution_matrix = substitution_matrices.load('BLOSUM62')
+substitution_matrix = substitution_matrices.load("BLOSUM62")
 
+# helper functionality
 
+# recompute the matrix to match our alphabet order
 
-    # helper functionality
+blosum_dict = {}
 
-    # recompute the matrix to match our alphabet order
+for wt_aa in aa_alphabet:
+    blosum_dict[wt_aa] = torch.tensor(
+        [substitution_matrix[wt_aa, mut_aa] for mut_aa in aa_alphabet]
+    )
 
-    blosum_dict = {}
-
-    for wt_aa in aa_alphabet:
-
-        blosum_dict[wt_aa] = torch.tensor([substitution_matrix[wt_aa,mut_aa] for mut_aa in aa_alphabet])
-
+# print(blosum_dict)
 
 
-    #print(blosum_dict)
-    return blosum_dict
-
-
-class BlosumBaseline():
-
+class BlosumBaseline:
     # baseline model (not using pytorch bc it's not a deep learning model)
 
-    def forward(self,sequence):
+    def forward(self, sequence):
+        prediction = torch.zeros((1, len(sequence), 20))
 
-        
-
-        prediction = torch.zeros((1,len(sequence),20))
-
-
-
-        for i, aa in enumerate(sequence): # for each position in the sequence  
-
+        for i, aa in enumerate(sequence):  # for each position in the sequence
             # get BLOSUM substitution scores
 
-            prediction[0,i] = blosum_dict[aa]
-
-
+            prediction[0, i] = blosum_dict[aa]
 
         return prediction
 
+
 def main():
-    blosum_dict = load_df()
     model = BlosumBaseline()
 
-
-
-    preds =[]
+    preds = []
 
     all_y = []
 
-
-
     for batch in dataloader_test:
-
         # read from batch
 
         x = batch["sequence"][0]
@@ -239,32 +190,34 @@ def main():
 
         prediction = model.forward(x)
 
-        preds.append(prediction[mask==1].flatten().numpy()) # flatten to create one dimensional vector from 2D sequence
+        preds.append(
+            prediction[mask == 1].flatten().numpy()
+        )  # flatten to create one dimensional vector from 2D sequence
 
-        all_y.append(target[mask==1].flatten().numpy()) # flatten to create one dimensional vector from 2D sequence
-
-
+        all_y.append(
+            target[mask == 1].flatten().numpy()
+        )  # flatten to create one dimensional vector from 2D sequence
 
     # concatenate and plot
 
-    preds= np.concatenate(preds)
+    preds = np.concatenate(preds)
 
     all_y = np.concatenate(all_y)
 
-
-
-    sns.regplot(x=preds,y=all_y)
+    sns.regplot(x=preds, y=all_y)
 
     plt.xlabel("Predicted ddG")
 
     plt.ylabel("Measured ddG")
 
-
-
-    # get RMSE, Pearson and Spearman correlation 
+    # get RMSE, Pearson and Spearman correlation
 
     print("RMSE:", skmetrics.mean_squared_error(all_y, preds, squared="False"))
 
     print("Pearson r:", scipy.stats.pearsonr(preds, all_y))
 
     print("Spearman r:", scipy.stats.spearmanr(preds, all_y))
+
+
+if __name__ == "__main__":
+    main()
