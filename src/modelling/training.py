@@ -47,7 +47,7 @@ def train(model: nn.Module | None, params: TrainParams):
 
     train_df, val_df, test_df = load_df(params.train_df)
 
-    model = BasicMLP(768)
+    # model = BasicMLP(768)
     optim = torch.optim.Adam(model.parameters(), params.lr)
     criterion = RMSELoss(0)
 
