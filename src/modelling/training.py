@@ -3,6 +3,7 @@ from torch import nn
 from sklearn.model_selection import KFold
 from tqdm import tqdm
 from src.given_utils import load_df
+from src import data_analysis
 
 global DEVICE
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -72,8 +73,13 @@ def validate(model: nn.Module, criterion: nn.Module, df):
         yhat = model(embs)
         loss = criterion(yhat, lbl)
         losses.append(loss)
+        r = data_analysis.validate(lbl, yhat, ["pearson", "spearman"], False)
+        scc.append(r["Spearman Correlation"])
+        pcc.append(r["Pearson Correlation"])
 
     loss = sum(losses) / len(losses)
+    scc = sum(scc) / len(scc)
+    pcc = sum(scc) / len(scc)
 
     print(f"\tLoss: {loss:.3f} | scc: {scc:.3f} | pcc: {pcc:.3f}")
 

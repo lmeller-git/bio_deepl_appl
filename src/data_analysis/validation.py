@@ -27,7 +27,9 @@ def spearman_corr(y_true, y_pred):
     return corr
 
 
-def validate(y_true, y_pred, performance_metric=None, visualize=True):
+def validate(
+    y_true, y_pred, performance_metric: list[str] = [], visualize: bool = True
+):
     results = {}
 
     y_true = y_true.cpu().detach().numpy()
