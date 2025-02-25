@@ -1,36 +1,71 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 25 16:22:08 2025
+Created on Tue Feb 25 15:16:29 2025
 
 @author: takutaku
 """
 
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import mean_squared_error
 
+
+def rmse(y_true, y_pred):
+    return np.sqrt(mean_squared_error(y_true, y_pred))
+
+def pearson_corr(y_true, y_pred):
+    corr, _ = pearsonr(y_true, y_pred)
+    return corr
+
+def spearman_corr(y_true, y_pred):
+    corr, _ = spearmanr(y_true, y_pred)
+    return corr
+        
+        
+def validate(y_true, y_pred, performance_metric  = None, visualize = True):    
+    results = {}
     
+    y_true = y_true.cpu().detach().numpy()
+    y_pred = y_pred.cpu().detach().numpy()
 
-def compare_models(models, x_test, y_test, metrics=None, visualize=True):
-    """
-    Compare multiple models based on validation metrics and visualization.
+    if performance_metric  is None:
+        performance_metric  = ['rmse', 'pearson', 'spearman']
 
-    Parameters:
-    - models: dict, model names as keys and trained models as values.
-    - x_test: array-like, test input data.
-    - y_test: array-like, true output values.
-    - metrics: list of strings, metrics to calculate ('rmse', 'pearson', 'spearman').
-    - visualize: bool, whether to visualize results.
+    if 'rmse' in performance_metric :
+        results['RMSE'] = rmse(y_true, y_pred)
 
-    Returns:
-    - Dictionary with model names as keys and validation results as values.
-    """
-    comparison_results = {}
+    if 'pearson' in performance_metric :
+        results['Pearson Correlation'] = pearson_corr(y_true, y_pred)
 
-    for name, model in models.items():
-        print(f"\nValidating Model: {name}")
-        y_pred = model.predict(x_test)
-        results = validate(y_test, y_pred, metrics=metrics, visualize=visualize)
-        comparison_results[name] = results
+    if 'spearman' in performance_metric :
+        results['Spearman Correlation'] = spearman_corr(y_true, y_pred)
 
-        print(f"Results for {name}: {results}")
+    if visualize:
+        plot_predictions(y_true, y_pred)
 
-    return comparison_results
+    return results
+    
+        
+def plot_predictions(y_true, y_pred, title="Predictions vs. True Values"):
+   plt.figure(figsize=(14, 6))
+
+   plt.subplot(1, 2, 1)
+   sns.regplot(x=y_true, y=y_pred, scatter_kws={"alpha": 0.6}, line_kws={"color": "red"})
+   plt.xlabel('True Values')
+   plt.ylabel('Predicted Values')
+   plt.title(f"{title} (Scatter Plot)")
+
+   residuals = y_true - y_pred
+   plt.subplot(1, 2, 2)
+   sns.histplot(residuals, kde=True, color="skyblue")
+   plt.axvline(0, color='red', linestyle='--')
+   plt.xlabel('Residuals')
+   plt.title(f"{title} (Residual Distribution)")
+
+   plt.tight_layout()
+   plt.show()
+        
+   
