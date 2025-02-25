@@ -37,6 +37,8 @@ import lightning as L
 import torchmetrics
 
 from torchmetrics.regression import PearsonCorrCoef
+
+
 aa_alphabet = 'ACDEFGHIKLMNPQRSTVWY' # amino acid alphabet
 
 aa_to_int = {aa: i for i, aa in enumerate(aa_alphabet)} # mapping from amino acid to number
@@ -156,33 +158,35 @@ class SequenceData(Dataset):
         # returns encoded sequence, mask and target sequence 
 
         return {"sequence": seq, "mask": mask, "labels": target}
-dataset_test = SequenceData('project_data/mega_test.csv')
 
-dataloader_test = DataLoader(dataset_test, batch_size=1, shuffle=False)
-# naive benchmark
+def load_df():
+    dataset_test = SequenceData('project_data/mega_test.csv')
 
-# just use BLOSUM62 matrix to approximate ddG changes
+    dataloader_test = DataLoader(dataset_test, batch_size=1, shuffle=False)
+    # naive benchmark
 
-from Bio.Align import substitution_matrices
+    # just use BLOSUM62 matrix to approximate ddG changes
 
-substitution_matrix = substitution_matrices.load('BLOSUM62')
+    from Bio.Align import substitution_matrices
 
-
-
-# helper functionality
-
-# recompute the matrix to match our alphabet order
-
-blosum_dict = {}
-
-for wt_aa in aa_alphabet:
-
-    blosum_dict[wt_aa] = torch.tensor([substitution_matrix[wt_aa,mut_aa] for mut_aa in aa_alphabet])
+    substitution_matrix = substitution_matrices.load('BLOSUM62')
 
 
 
-#print(blosum_dict)
+    # helper functionality
 
+    # recompute the matrix to match our alphabet order
+
+    blosum_dict = {}
+
+    for wt_aa in aa_alphabet:
+
+        blosum_dict[wt_aa] = torch.tensor([substitution_matrix[wt_aa,mut_aa] for mut_aa in aa_alphabet])
+
+
+
+    #print(blosum_dict)
+    return blosum_dict
 
 
 class BlosumBaseline():
@@ -207,58 +211,60 @@ class BlosumBaseline():
 
         return prediction
 
-model = BlosumBaseline()
+def main():
+    blosum_dict = load_df()
+    model = BlosumBaseline()
 
 
 
-preds =[]
+    preds =[]
 
-all_y = []
-
-
-
-for batch in dataloader_test:
-
-    # read from batch
-
-    x = batch["sequence"][0]
-
-    mask = batch["mask"][0]
-
-    target = batch["labels"][0]
-
-    ## adjust to work with your model
-
-    # predict
-
-    prediction = model.forward(x)
-
-    preds.append(prediction[mask==1].flatten().numpy()) # flatten to create one dimensional vector from 2D sequence
-
-    all_y.append(target[mask==1].flatten().numpy()) # flatten to create one dimensional vector from 2D sequence
+    all_y = []
 
 
 
-# concatenate and plot
+    for batch in dataloader_test:
 
-preds= np.concatenate(preds)
+        # read from batch
 
-all_y = np.concatenate(all_y)
+        x = batch["sequence"][0]
+
+        mask = batch["mask"][0]
+
+        target = batch["labels"][0]
+
+        ## adjust to work with your model
+
+        # predict
+
+        prediction = model.forward(x)
+
+        preds.append(prediction[mask==1].flatten().numpy()) # flatten to create one dimensional vector from 2D sequence
+
+        all_y.append(target[mask==1].flatten().numpy()) # flatten to create one dimensional vector from 2D sequence
 
 
 
-sns.regplot(x=preds,y=all_y)
+    # concatenate and plot
 
-plt.xlabel("Predicted ddG")
+    preds= np.concatenate(preds)
 
-plt.ylabel("Measured ddG")
+    all_y = np.concatenate(all_y)
 
 
 
-# get RMSE, Pearson and Spearman correlation 
+    sns.regplot(x=preds,y=all_y)
 
-print("RMSE:", skmetrics.mean_squared_error(all_y, preds, squared="False"))
+    plt.xlabel("Predicted ddG")
 
-print("Pearson r:", scipy.stats.pearsonr(preds, all_y))
+    plt.ylabel("Measured ddG")
 
-print("Spearman r:", scipy.stats.spearmanr(preds, all_y))
+
+
+    # get RMSE, Pearson and Spearman correlation 
+
+    print("RMSE:", skmetrics.mean_squared_error(all_y, preds, squared="False"))
+
+    print("Pearson r:", scipy.stats.pearsonr(preds, all_y))
+
+    print("Spearman r:", scipy.stats.spearmanr(preds, all_y))
