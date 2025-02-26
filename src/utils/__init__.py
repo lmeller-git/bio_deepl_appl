@@ -7,6 +7,8 @@ from src.utils.utils import (
     weight_reset,
     save_params,
 )
+import src.utils.blosum.content as blosum
+
 
 __all__ = [
     "Plotter",
