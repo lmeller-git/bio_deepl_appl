@@ -81,7 +81,7 @@ class RMSELoss(nn.Module):
 
 def train(model: nn.Module | None, params: TrainParams):
     if params.cv > 0:
-        kfold(params
+        kfold(params)
 
     train_df, val_df, test_df = load_df(params.train_df, params.batch_size)
 
@@ -105,6 +105,7 @@ def train_loop(
     criterion = RMSELoss(0)
     model.to(DEVICE)
     for epoch in tqdm(range(params.epochs)):
+        print("step")
         model.train()
         step(model, optim, criterion, train, plotter)
         model.eval()
@@ -120,13 +121,13 @@ def kfold(params: TrainParams) -> nn.Module:
         params.train_df + "project_data/mega_train_embeddings",
         params.train_df + "project_data/mega_train.csv",
     )
-    val_data = ProtEmbeddingDataset(
+    _val_data = ProtEmbeddingDataset(
         params.train_df + "project_data/mega_val_embeddings",
         params.train_df + "project_data/mega_val.csv",
     )
 
     kf = KFold(params.cv)
-    models = [BasicMLP(768)]#, BasicMLP(768)]
+    models = [BasicMLP(768)]  # , BasicMLP(768)]
     val_df = np.zeros((len(models), params.cv))
     train_df = np.zeros((len(models), params.cv))
     plotter = LossPlotter()
@@ -151,8 +152,8 @@ def kfold(params: TrainParams) -> nn.Module:
         )
 
     for split, (train_idc, val_idc) in tqdm(enumerate(kf.split(train_data.ids))):
-        #print("\n")
-        #print(split, train_idc, val_idc)
+        # print("\n")
+        # print(split, train_idc, val_idc)
         train_sampler = sampler.SubsetRandomSampler(train_idc)
         val_sampler = sampler.SubsetRandomSampler(val_idc)
         train_split = DataLoader(
@@ -160,19 +161,21 @@ def kfold(params: TrainParams) -> nn.Module:
             batch_size=kfold_params[split].batch_size,
             shuffle=False,
             num_workers=16,
-            sampler=train_sampler
+            sampler=train_sampler,
         )
         val_split = DataLoader(
             train_data,
             batch_size=kfold_params[split].batch_size,
             shuffle=False,
             num_workers=16,
-            sampler=val_sampler
+            sampler=val_sampler,
         )
         for m, model in enumerate(models):
             train_loop(model, train_split, val_split, kfold_params[split], plotter)
             val_df[m, split] = sum(plotter.y["val loss"]) / len(plotter.y["val loss"])
-            train_df[m, split] = sum(plotter.y["train loss"]) / len(plotter.y["train loss"])
+            train_df[m, split] = sum(plotter.y["train loss"]) / len(
+                plotter.y["train loss"]
+            )
             plotter.clear()
             kfold_plotter.update("val model " + str(m), val_df[m, split], split)
             kfold_plotter.update("train model " + str(m), train_df[m, split], split)
