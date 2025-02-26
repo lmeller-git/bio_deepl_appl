@@ -12,8 +12,9 @@ def compare_to_baseline(
     model_preds: dict = {},
     performance_metric: list[str] = [],
     visualize: bool = True,
+    p: str = "./data/",
 ):
-    (baseline_pred, baseline_truth) = blosum.main()
+    (baseline_pred, baseline_truth) = blosum.main(p)
 
     results = {
         "Baseline": data_analysis.validate(

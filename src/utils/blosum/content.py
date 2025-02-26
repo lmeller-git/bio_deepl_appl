@@ -131,27 +131,15 @@ class SequenceData(Dataset):
         return {"sequence": seq, "mask": mask, "labels": target}
 
 
-dataset_test = SequenceData("project_data/mega_test.csv")
-
-dataloader_test = DataLoader(dataset_test, batch_size=1, shuffle=False)
-# naive benchmark
-
-# just use BLOSUM62 matrix to approximate ddG changes
-
-substitution_matrix = substitution_matrices.load("BLOSUM62")
-
-# helper functionality
-
-# recompute the matrix to match our alphabet order
-
 blosum_dict = {}
 
+
+substitution_matrix = substitution_matrices.load("BLOSUM62")
+# print(blosum_dict)
 for wt_aa in aa_alphabet:
     blosum_dict[wt_aa] = torch.tensor(
         [substitution_matrix[wt_aa, mut_aa] for mut_aa in aa_alphabet]
     )
-
-# print(blosum_dict)
 
 
 class BlosumBaseline:
@@ -171,7 +159,18 @@ class BlosumBaseline:
         return self.forward(sequence)
 
 
-def main():
+def main(p: str = "./data/"):
+    dataset_test = SequenceData(p + "project_data/mega_test.csv")
+
+    dataloader_test = DataLoader(dataset_test, batch_size=1, shuffle=False)
+    # naive benchmark
+
+    # just use BLOSUM62 matrix to approximate ddG changes
+
+    # helper functionality
+
+    # recompute the matrix to match our alphabet order
+
     model = BlosumBaseline()
 
     preds = []
