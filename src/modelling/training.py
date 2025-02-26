@@ -101,11 +101,14 @@ def foo(df, model, p):
     acc = []
     acc_hat = []
     for emb, lbl in df:
+        print("lbl", lbl.shape)
+        print("emb", emb.shape)
         acc_hat.append(model(emb.to(DEVICE)).squeeze())
         acc.append(lbl.squeeze())
 
-    acc = torch.vstack(acc)
-    acc_hat = torch.vstack(acc_hat)
+    acc = torch.hstack(acc, axis=1)
+    acc_hat = torch.hstack(acc_hat)
+    print(acc.shape, acc_hat.shape)
     data_analysis.compare_to_baseline(
         acc, {"model": acc_hat}, ["pearson", "spearman", "rmse"]
     )

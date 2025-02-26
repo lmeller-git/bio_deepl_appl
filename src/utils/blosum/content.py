@@ -219,7 +219,7 @@ def main(p: str = "./data/"):
     print("Pearson r:", scipy.stats.pearsonr(preds, all_y))
 
     print("Spearman r:", scipy.stats.spearmanr(preds, all_y))
-    return (preds, all_y)
+    return (torch.tensor(preds), torch.tensor(all_y))
 
 
 if __name__ == "__main__":
