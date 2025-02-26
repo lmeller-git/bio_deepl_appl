@@ -27,45 +27,51 @@ class ComparisonResult:
             else rhs.rmse
             if rhs.rmse is not None
             else None
-            )
+        )
         self.scc = (
             self.scc + rhs.scc
             if self.scc is not None
             else rhs.scc
             if rhs.scc is not None
             else None
-            )
-        self.pcc =( 
+        )
+        self.pcc = (
             self.pcc + rhs.pcc
             if self.pcc is not None
             else rhs.pcc
             if rhs.pcc is not None
             else None
-            )
+        )
         return self
 
     def __sub__(self, rhs):
-        self.rmse =(
+        self.rmse = (
             self.rmse - rhs.rmse
             if self.rmse is not None
             else rhs.rmse
             if rhs.rmse is not None
             else None
-            )
+        )
         self.scc = (
             self.scc - rhs.scc
             if self.scc is not None
             else rhs.scc
             if rhs.scc is not None
             else None
-            )
-        self.pcc =( 
+        )
+        self.pcc = (
             self.pcc - rhs.pcc
             if self.pcc is not None
             else rhs.pcc
             if rhs.pcc is not None
             else None
-            )
+        )
+        return self
+
+    def __div__(self, rhs):
+        self.pcc = self.pcc / rhs if self.pcc is not None else None
+        self.scc = self.scc / rhs if self.scc is not None else None
+        self.rmse = self.rmse / rhs if self.rmse is not None else None
         return self
 
     def __repr__(self):
@@ -84,13 +90,22 @@ class ComparisonPlotter(Plotter):
 
     def __init__(self):
         super().__init__()
-        self.y = defaultdict(ComparisonResult)
+        self.y = defaultdict(list)
 
     def update(self, key: str, r: ComparisonResult):
-        self.y[key] += r
+        self.y[key].append(r)
 
     def clear(self):
         self.y = defaultdict(ComparisonResult)
+
+    def finalize(self):
+        y = defaultdict(ComparisonResult)
+        for k, v in self.y.items():
+            for v_ in v:
+                y[k] += v_
+
+            y[k] /= len(v)
+        self.y = y
 
     def plot(self):
         pass
@@ -112,8 +127,10 @@ def baseline(
     p: str = "./data/",
 ):
     (baseline_pred, baseline_truth) = blosum.main(p)
-    for (r, t) in zip(baseline_pred, baseline_truth):
-        val_data = data_analysis.validate(torch.tensor(t), torch.tensor(r), callbacks, visualize = False)
+    for r, t in zip(baseline_pred, baseline_truth):
+        val_data = data_analysis.validate(
+            torch.tensor(t), torch.tensor(r), callbacks, visualize=False
+        )
         plotter.update(
             "baseline",
             ComparisonResult(
@@ -147,8 +164,9 @@ def baseline(
             ),
         )
 
-        print(plotter)
-        plotter.plot()
+    plotter.finalize()
+    print(plotter)
+    plotter.plot()
 
 
 def compare_to_baseline(
