@@ -14,18 +14,18 @@ from sklearn.metrics import mean_squared_error
 
 
 def rmse(y_true, y_pred):
-    return np.sqrt(mean_squared_error(y_true, y_pred))
+    return [np.sqrt(mean_squared_error(t, p)) for t, p in zip(y_true, y_pred)] 
 
 
 def pearson_corr(y_true, y_pred):
-    corr, _ = pearsonr(y_true, y_pred)
-    return corr
-
+    #corr, _ = pearsonr(y_true, y_pred)
+    #return corr
+    return [pearsonr(t, p)[0] for t, p in zip(y_true, y_pred)]
 
 def spearman_corr(y_true, y_pred):
-    corr, _ = spearmanr(y_true, y_pred)
-    return corr
-
+    #corr, _ = spearmanr(y_true, y_pred)
+    #return corr
+    return [spearmanr(t, p)[0] for t, p in zip(y_true, y_pred)]
 
 def validate(
     y_true, y_pred, performance_metric: list[str] = [], visualize: bool = True
