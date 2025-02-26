@@ -21,52 +21,54 @@ class ComparisonResult:
         self.rmse = rmse
 
     def __add__(self, rhs):
-        self.rmse = (
+        n = ComparisonResult()
+        n.rmse = (
             self.rmse + rhs.rmse
             if self.rmse is not None
             else rhs.rmse
             if rhs.rmse is not None
             else None
         )
-        self.scc = (
+        n.scc = (
             self.scc + rhs.scc
             if self.scc is not None
             else rhs.scc
             if rhs.scc is not None
             else None
         )
-        self.pcc = (
+        n.pcc = (
             self.pcc + rhs.pcc
             if self.pcc is not None
             else rhs.pcc
             if rhs.pcc is not None
             else None
         )
-        return self
+        return n
 
     def __sub__(self, rhs):
-        self.rmse = (
+        n = ComparisonResult()
+        n.rmse = (
             self.rmse - rhs.rmse
             if self.rmse is not None
             else rhs.rmse
             if rhs.rmse is not None
             else None
         )
-        self.scc = (
+        n.scc = (
             self.scc - rhs.scc
             if self.scc is not None
             else rhs.scc
             if rhs.scc is not None
             else None
         )
-        self.pcc = (
+        n.pcc = (
             self.pcc - rhs.pcc
             if self.pcc is not None
             else rhs.pcc
             if rhs.pcc is not None
             else None
         )
-        return self
+        return n
 
     def div(self, rhs):
         self.pcc = self.pcc / rhs if self.pcc is not None else None
@@ -114,7 +116,7 @@ class ComparisonPlotter(Plotter):
         s = ""
         baseline = self.y["baseline"]
         for k, v in self.y.items():
-            s += f"{k}: {v} | delta: {v - baseline}\n"
+            s += f"{k}: {v}|\tdelta: {v - baseline}\n"
 
         return s
 
