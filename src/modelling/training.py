@@ -8,7 +8,14 @@ import numpy as np
 # TODO fix circular import
 from src import data_analysis
 from src.modelling.eval import LossPlotter
-from src.utils import load_df, Plotter, save_model, ProtEmbeddingDataset, EmptyPlotter
+from src.utils import (
+    load_df,
+    Plotter,
+    save_model,
+    ProtEmbeddingDataset,
+    EmptyPlotter,
+    weight_reset,
+)
 
 global DEVICE
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -157,6 +164,7 @@ def kfold(params: TrainParams) -> nn.Module:
             plotter.clear()
             kfold_plotter.update("val model " + m, val_df[m, split], split)
             kfold_plotter.update("train model " + m, train_df[m, split], split)
+            weight_reset(model)
 
     plotter.plot()
     (train_df, train_std) = (np.mean(train_df, axis=1), np.std(train_df, axis=1))

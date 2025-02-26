@@ -16,7 +16,7 @@ def main(args):
             d_batch_size=args.delta_batchsize,
         )
     else:
-        params = TrainParams(args.data, args.epochs, args.lr, args.batch_size)
+        params = TrainParams(args.data, args.epochs, args.lr, args.batchsize)
     train(model, params)
 
 
