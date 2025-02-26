@@ -26,3 +26,17 @@ class Plotter(ABC):
     @abstractmethod
     def clear(self) -> None:
         pass
+
+
+class EmptyPlotter(Plotter):
+    def __init__(self):
+        super().__init__()
+
+    def plot(self) -> None:
+        pass
+
+    def update(self) -> None:
+        pass
+
+    def clear(self) -> None:
+        pass

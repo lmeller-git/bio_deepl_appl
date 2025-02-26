@@ -97,7 +97,7 @@ def model():
     pass
 
 
-def load_df(p: str):
+def load_df(p: str, batch_size: int = 1024):
     dataset_train = ProtEmbeddingDataset(
         p + "project_data/mega_train_embeddings", p + "project_data/mega_train.csv"
     )
@@ -111,11 +111,11 @@ def load_df(p: str):
     )
 
     dataloader_train = DataLoader(
-        dataset_train, batch_size=1024, shuffle=True, num_workers=16
+        dataset_train, batch_size=batch_size, shuffle=True, num_workers=16
     )
 
     dataloader_val = DataLoader(
-        dataset_val, batch_size=512, shuffle=False, num_workers=16
+        dataset_val, batch_size=batch_size, shuffle=False, num_workers=16
     )
 
     dataloader_test = DataLoader(dataset_test, batch_size=32, shuffle=False)

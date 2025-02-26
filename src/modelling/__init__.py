@@ -1,5 +1,5 @@
 from src.modelling.models import BasicMLP
 from src.modelling.training import TrainParams, train
-from src.modelling.eval import Plotter, LossPlotter, EmptyPlotter
+from src.modelling.eval import LossPlotter
 
-__all__ = ["BasicMLP", "TrainParams", "train", "Plotter", "LossPlotter", "EmptyPlotter"]
+__all__ = ["BasicMLP", "TrainParams", "train", "LossPlotter"]

@@ -2,33 +2,61 @@ import torch
 from torch import nn
 from sklearn.model_selection import KFold
 from tqdm import tqdm
+from torch.utils.data import DataLoader
+import numpy as np
 
 # TODO fix circular import
 from src import data_analysis
 from src.modelling.eval import LossPlotter
-from src.utils import load_df, Plotter, save_model
+from src.utils import load_df, Plotter, save_model, ProtEmbeddingDataset, EmptyPlotter
 
 global DEVICE
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.set_default_dtype(torch.float32)
 torch.manual_seed(42)
 
+"""
+class CVDefinition:
+    lr_split: float
+    epoch_split: int
+    batch_split: int
+
+    def __init__(
+        self, lr_split: float = 0.0, epoch_split: int = 0, batch_split: int = 0
+    ):
+        self.lr_split = lr_split
+        self.epoch_split = epoch_split
+        self.batch_split = batch_split
+"""
+
 
 class TrainParams:
     epochs: int
     train_df: str
     lr: float
+    batch_size: int
     cv: int
     kfold_args: dict
+    data: str
+    # cv_def: CVDefinition
 
     def __init__(
-        self, train_df, epochs: int = 10, lr: float = 1e-4, cv: int = 0, **kwargs
+        self,
+        train_df,
+        epochs: int = 10,
+        lr: float = 1e-4,
+        batch_size: int = 1024,
+        cv: int = 0,
+        # cv_definition: CVDefinition = CVDefinition(),
+        data: str = "./data/",
+        **kwargs,
     ):
         self.epochs = epochs
         self.lr = lr
         self.train_df = train_df
         self.cv = cv
         self.kfold_args = kwargs
+        # self.cv_def = cv_definition
 
 
 class RMSELoss(nn.Module):
@@ -46,30 +74,102 @@ def train(model: nn.Module | None, params: TrainParams):
     if params.cv > 0:
         kfold(params)
 
-    # TODO implement kfold integration
-
-    train_df, val_df, test_df = load_df(params.train_df)
+    train_df, val_df, test_df = load_df(params.train_df, params.batch_size)
     plotter = LossPlotter()
     # model = BasicMLP(768)
+    train_loop(model, train_df, val_df, params, plotter)
+    plotter.plot()
+    save_model(model)
+
+
+def train_loop(
+    model: nn.Module,
+    train: DataLoader,
+    test: DataLoader,
+    params: TrainParams,
+    plotter: Plotter = EmptyPlotter(),
+):
     optim = torch.optim.Adam(model.parameters(), params.lr)
     criterion = RMSELoss(0)
     model.to(DEVICE)
     for epoch in tqdm(range(params.epochs)):
         model.train()
-        step(model, optim, criterion, train_df, plotter)
+        step(model, optim, criterion, train, plotter)
         model.eval()
         with torch.no_grad():
             print(f"Epoch {epoch}:")
-            validate(model, criterion, val_df, plotter)
-    save_model(model)
-    plotter.plot()
+            validate(model, criterion, test, plotter)
 
 
 def kfold(params: TrainParams) -> nn.Module:
-    pass
+    # TODO: Hyperparameter tuning via Vec<TrainParams>
+    train_df = ProtEmbeddingDataset(
+        params.data + "project_data/mega_train_embeddings",
+        params.data + "project_data/mega_train.csv",
+    )
+    val_df = ProtEmbeddingDataset(
+        params.data + "project_data/mega_val_embeddings",
+        params.data + "project_data/mega_val.csv",
+    )
+
+    kf = KFold(params.cv)
+    models = []
+    val_df = np.zeros((len(models), params.cv))
+    train_df = np.zeros((len(models), params.cv))
+    plotter = LossPlotter()
+    kfold_plotter = LossPlotter("rmse kfold")
+    kfold_params = []
+    for i in range(params.cv):
+        base_lr = params.lr
+        base_epochs = params.epochs
+        base_batch_size = 1024
+        for k, v in params.kfold_args:
+            match k:
+                case "d_lr":
+                    base_lr += i * v
+                case "d_epoch":
+                    base_epochs += i * v
+                case "d_batch_size":
+                    base_batch_size += i * v
+                case _:
+                    print(f"case {k} is not defined")
+        kfold_params.append(
+            TrainParams(params.train_df, base_epochs, base_lr, base_batch_size)
+        )
+
+    for split, (train, val) in tqdm(enumerate(kf.split(len(train_df)))):
+        train_split = DataLoader(
+            train_df[train],
+            batch_size=kfold_params[split].batch_size,
+            shuffle=True,
+            num_workers=16,
+        )
+        val_split = DataLoader(
+            train_df[val],
+            batch_size=kfold_params[split].batch_size,
+            shuffle=False,
+            num_workers=16,
+        )
+        for m, model in enumerate(models):
+            train_loop(model, train_split, val_split, kfold_params[split], plotter)
+            val_df[m, split] = sum(plotter.y["val loss"]) / params.epochs
+            train_df[m, split] = sum(plotter.y["train loss"]) / params.epochs
+            plotter.clear()
+            kfold_plotter.update("val model " + m, val_df[m, split], split)
+            kfold_plotter.update("train model " + m, train_df[m, split], split)
+
+    plotter.plot()
+    (train_df, train_std) = (np.mean(train_df, axis=1), np.std(train_df, axis=1))
+    (val_df, val_std) = (np.mean(val_df, axis=1), np.std(val_df, axis=1))
+    best_model = np.argmax(train_df)
+    print(
+        f"Best model in fold {best_model}: {models[best_model]}\ntrain loss: {train_df[best_model]} | train std: {train_std[best_model]} | val loss: {val_df[best_model]} | val std: {val_std[best_model]}"
+    )
+    params.cv = 0
+    train(models[best_model], params)
 
 
-def validate(model: nn.Module, criterion: nn.Module, df, plotter: Plotter):
+def validate(model: nn.Module, criterion: nn.Module, df: DataLoader, plotter: Plotter):
     losses = []
     scc = []
     pcc = []
@@ -93,7 +193,7 @@ def step(
     model: nn.Module,
     optim: torch.optim.Optimizer,
     criterion: nn.Module(),
-    df,
+    df: DataLoader,
     plotter: Plotter,
 ):
     losses = []
