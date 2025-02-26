@@ -14,4 +14,4 @@ from src.data_analysis.validation import (
     spearman_corr,
 )
 
-from src.data_analysis.comparison_to_baseline import compare_to_baseline
+from src.data_analysis.comparison_to_baseline import compare_to_baseline, baseline
