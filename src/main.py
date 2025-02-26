@@ -1,10 +1,10 @@
-from src import train, TrainParams, BasicMLP
+from src import train, TrainParams, BasicMLP, MLP
 from argparse import ArgumentParser
 
 
 def main(args):
     print(args)
-    model = BasicMLP(768)
+    model = MLP(768)
     if args.mode == "cv":
         params = TrainParams(
             args.data,
