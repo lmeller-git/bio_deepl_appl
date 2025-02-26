@@ -53,7 +53,7 @@ def train(model: nn.Module | None, params: TrainParams):
     # model = BasicMLP(768)
     optim = torch.optim.Adam(model.parameters(), params.lr)
     criterion = RMSELoss(0)
-
+    model.to(DEVICE)
     for epoch in tqdm(range(params.epochs)):
         model.train()
         step(model, optim, criterion, train_df, plotter)
