@@ -68,7 +68,7 @@ class ComparisonResult:
         )
         return self
 
-    def __div__(self, rhs):
+    def div(self, rhs):
         self.pcc = self.pcc / rhs if self.pcc is not None else None
         self.scc = self.scc / rhs if self.scc is not None else None
         self.rmse = self.rmse / rhs if self.rmse is not None else None
@@ -104,7 +104,7 @@ class ComparisonPlotter(Plotter):
             for v_ in v:
                 y[k] += v_
 
-            y[k] /= len(v)
+            y[k] = y[k].div(len(v))
         self.y = y
 
     def plot(self):
