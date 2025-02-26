@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Feb 25 15:16:29 2025
-
-@author: takutaku
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -13,19 +5,19 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import mean_squared_error
 
 
-def rmse(y_true, y_pred):
-    return [np.sqrt(mean_squared_error(t, p)) for t, p in zip(y_true, y_pred)] 
+def rmse(y_true, y_pred): 
+    return np.sqrt(mean_squared_error(y_true, y_pred))
 
 
 def pearson_corr(y_true, y_pred):
-    #corr, _ = pearsonr(y_true, y_pred)
-    #return corr
-    return [pearsonr(t, p)[0] for t, p in zip(y_true, y_pred)]
+    corr, _ = pearsonr(y_true, y_pred)    
+    return corr
+    
 
 def spearman_corr(y_true, y_pred):
-    #corr, _ = spearmanr(y_true, y_pred)
-    #return corr
-    return [spearmanr(t, p)[0] for t, p in zip(y_true, y_pred)]
+    corr, _ = spearmanr(y_true, y_pred)
+    return corr
+
 
 def validate(
     y_true, y_pred, performance_metric: list[str] = [], visualize: bool = True
@@ -36,6 +28,7 @@ def validate(
 
     y_true = y_true.cpu().detach().numpy()
     y_pred = y_pred.cpu().detach().numpy()
+
 
     if performance_metric is None:
         performance_metric = ["rmse", "pearson", "spearman"]

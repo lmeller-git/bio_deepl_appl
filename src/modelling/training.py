@@ -81,9 +81,10 @@ class RMSELoss(nn.Module):
 
 def train(model: nn.Module | None, params: TrainParams):
     if params.cv > 0:
-        kfold(params)
+        kfold(params
 
     train_df, val_df, test_df = load_df(params.train_df, params.batch_size)
+
     plotter = LossPlotter()
     # model = BasicMLP(768)
     train_loop(model, train_df, val_df, params, plotter)

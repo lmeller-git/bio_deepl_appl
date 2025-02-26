@@ -11,7 +11,7 @@ class BasicMLP(nn.Module):
 
     def block(self, in_shape: int, out: float) -> nn.Module:
         layer = nn.Sequential(
-            nn.Linear(in_shape, out), nn.ReLU(), nn.BatchNorm1d(out), nn.Dropout()
+            nn.Linear(in_shape, out, bias = False), nn.Sigmoid(), nn.BatchNorm1d(out), nn.Dropout()
         )
 
         return layer
