@@ -133,7 +133,7 @@ def kfold(params: TrainParams) -> nn.Module:
     plotter = LossPlotter()
     kfold_plotter = LossPlotter("rmse kfold")
     kfold_params = []
-    for i in range(params.cv):
+    for i in tqdm(range(params.cv)):
         base_lr = params.lr
         base_epochs = params.epochs
         base_batch_size = 1024
@@ -151,7 +151,8 @@ def kfold(params: TrainParams) -> nn.Module:
             TrainParams(params.train_df, base_epochs, base_lr, base_batch_size)
         )
 
-    for split, (train_idc, val_idc) in tqdm(enumerate(kf.split(train_data.ids))):
+    for split, (train_idc, val_idc) in enumerate(kf.split(train_data.ids)):
+        print(f"split {split}")
         train_sampler = sampler.SubsetRandomSampler(train_idc)
         val_sampler = sampler.SubsetRandomSampler(val_idc)
         train_split = DataLoader(
@@ -169,6 +170,7 @@ def kfold(params: TrainParams) -> nn.Module:
             sampler=val_sampler,
         )
         for m, model in enumerate(models):
+            print(f"model {m}")
             train_loop(model, train_split, val_split, kfold_params[split], plotter)
             val_df[m, split] = sum(plotter.y["val loss"]) / len(plotter.y["val loss"])
             train_df[m, split] = sum(plotter.y["train loss"]) / len(

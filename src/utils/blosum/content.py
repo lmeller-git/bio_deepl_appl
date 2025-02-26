@@ -167,6 +167,9 @@ class BlosumBaseline:
 
         return prediction
 
+    def __call__(self, sequence):
+        return self.forward(sequence)
+
 
 def main():
     model = BlosumBaseline()
@@ -217,6 +220,7 @@ def main():
     print("Pearson r:", scipy.stats.pearsonr(preds, all_y))
 
     print("Spearman r:", scipy.stats.spearmanr(preds, all_y))
+    return (preds, all_y)
 
 
 if __name__ == "__main__":
