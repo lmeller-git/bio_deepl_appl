@@ -2,10 +2,11 @@ import torch
 from torch import nn
 from sklearn.model_selection import KFold
 from tqdm import tqdm
+
 # TODO fix circular import
 from src import data_analysis
-from src.modelling.eval import Plotter, LossPlotter
-from src.utils import load_df
+from src.modelling.eval import LossPlotter
+from src.utils import load_df, Plotter, save_model
 
 global DEVICE
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -60,8 +61,9 @@ def train(model: nn.Module | None, params: TrainParams):
         with torch.no_grad():
             print(f"Epoch {epoch}:")
             validate(model, criterion, val_df, plotter)
-
+    save_model(model)
     plotter.plot()
+
 
 def kfold(params: TrainParams) -> nn.Module:
     pass
@@ -87,7 +89,13 @@ def validate(model: nn.Module, criterion: nn.Module, df, plotter: Plotter):
     print(f"\tLoss: {loss:.3f} | scc: {scc:.3f} | pcc: {pcc:.3f}")
 
 
-def step(model: nn.Module, optim: torch.optim.Optimizer, criterion: nn.Module(), df, plotter: Plotter):
+def step(
+    model: nn.Module,
+    optim: torch.optim.Optimizer,
+    criterion: nn.Module(),
+    df,
+    plotter: Plotter,
+):
     losses = []
     for embs, lbl in df:
         (embs, lbl) = (embs.to(DEVICE), lbl.to(DEVICE))

@@ -1,24 +1,6 @@
-from abc import ABC, abstractmethod
 from collections import defaultdict
 import matplotlib.pyplot as plt
-
-class Plotter(ABC):
-
-    def __init__(self):
-        super().__init__()
-        pass
-
-    @abstractmethod
-    def plot(self) -> None:
-        pass
-
-    @abstractmethod
-    def update(self, *args, **kwargs) -> None:
-        pass
-
-    @abstractmethod
-    def clear(self) -> None:
-        pass
+from src.utils import Plotter
 
 
 class LossPlotter(Plotter):
@@ -47,8 +29,8 @@ class LossPlotter(Plotter):
     def clear(self) -> None:
         self = LossPlotter(self.metric)
 
-class EmptyPlotter(Plotter):
 
+class EmptyPlotter(Plotter):
     def __init__(self):
         super().__init__()
 
