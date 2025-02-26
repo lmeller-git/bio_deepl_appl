@@ -46,18 +46,16 @@ class TrainParams:
     batch_size: int
     cv: int
     kfold_args: dict
-    data: str
     # cv_def: CVDefinition
 
     def __init__(
         self,
-        train_df,
+        train_df: str = "./data/",
         epochs: int = 10,
         lr: float = 1e-4,
         batch_size: int = 1024,
         cv: int = 0,
         # cv_definition: CVDefinition = CVDefinition(),
-        data: str = "./data/",
         **kwargs,
     ):
         self.epochs = epochs
@@ -67,6 +65,9 @@ class TrainParams:
         self.cv = cv
         self.kfold_args = kwargs
         # self.cv_def = cv_definition
+
+    def __repr__(self):
+        return f"Params:\nepochs={self.epochs} | lr={self.lr} | batch_size={self.batch_size}"
 
 
 class RMSELoss(nn.Module):
