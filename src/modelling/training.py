@@ -16,6 +16,7 @@ from src.utils import (
     ProtEmbeddingDataset,
     EmptyPlotter,
     weight_reset,
+    save_params,
 )
 
 global DEVICE
@@ -86,11 +87,11 @@ def train(model: nn.Module | None, params: TrainParams):
     train_df, val_df, test_df = load_df(params.train_df, params.batch_size)
 
     plotter = LossPlotter()
-    # model = BasicMLP(768)
     print("training model")
     train_loop(model, train_df, val_df, params, plotter)
     plotter.plot()
     save_model(model)
+    save_params(params)
     print("model trained and saved")
 
 
@@ -104,8 +105,7 @@ def train_loop(
     optim = torch.optim.Adam(model.parameters(), params.lr)
     criterion = RMSELoss(0)
     model.to(DEVICE)
-    for epoch in tqdm(range(params.epochs)):
-        print("step")
+    for epoch in range(params.epochs):
         model.train()
         step(model, optim, criterion, train, plotter)
         model.eval()
@@ -152,8 +152,6 @@ def kfold(params: TrainParams) -> nn.Module:
         )
 
     for split, (train_idc, val_idc) in tqdm(enumerate(kf.split(train_data.ids))):
-        # print("\n")
-        # print(split, train_idc, val_idc)
         train_sampler = sampler.SubsetRandomSampler(train_idc)
         val_sampler = sampler.SubsetRandomSampler(val_idc)
         train_split = DataLoader(
@@ -182,13 +180,11 @@ def kfold(params: TrainParams) -> nn.Module:
             weight_reset(model)
 
     kfold_plotter.plot()
-    print(train_df, val_df)
     (train_df, train_std) = (np.mean(train_df, axis=1), np.std(train_df, axis=1))
     (val_df, val_std) = (np.mean(val_df, axis=1), np.std(val_df, axis=1))
-    print(train_df, val_df)
     best_model = np.argmin(train_df)
     print(
-        f"Best model in fold {best_model}: {models[best_model]}\ntrain loss: {train_df[best_model]} | train std: {train_std[best_model]} | val loss: {val_df[best_model]} | val std: {val_std[best_model]}"
+        f"Best model in fold {best_model}: {models[best_model]}\ntrain loss: {train_df[best_model]} | train std: {train_std[best_model]} | val loss: {val_df[best_model]} | val std: {val_std[best_model]}\nParams: {kfold_params[best_model]}"
     )
     train(models[best_model], kfold_params[best_model])
 

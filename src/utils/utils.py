@@ -2,12 +2,22 @@ import torch
 from abc import ABC, abstractmethod
 
 
+class TrainParams:
+    pass
+
+
 def save_model(model: torch.nn.Module, path: str = "./out/best_model.pth") -> None:
     torch.save(model.state_dict(), path)
 
 
 def load_model(path: str = "./out/best_model.pth") -> torch.nn.Module:
     torch.load(path)
+
+
+def save_params(params: TrainParams, path: str = "./out/params.csv") -> None:
+    with open(path, "w") as f:
+        f.write(f"{params.epochs},{params.batch_size},{params.lr}")
+    pass
 
 
 def weight_reset(m):

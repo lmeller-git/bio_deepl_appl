@@ -78,12 +78,14 @@ class ProtEmbeddingDataset(Dataset):
 
         # wildtype embedding, uncomment if you want to use this, too
 
-        # tensor_path_wt = os.path.join(self.tensor_folder, self.wt_names[idx] + ".pt")
+        tensor_path_wt = os.path.join(self.tensor_folder, self.wt_names[idx] + ".pt")
 
-        # tensor_wt = torch.load(tensor_path_wt)['mean_representations'][6]
+        tensor_wt = torch.load(tensor_path_wt)["mean_representations"][6]
 
         label = self.labels[idx]  # ddG value
-
+        # simple difference between embedings
+        # TODO think of better ways (maybe Siamese network?)
+        tensor = tensor_wt - tensor
         # returns a tuple of the input embedding and the target ddG values
 
         return tensor, label.float()
