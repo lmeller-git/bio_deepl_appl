@@ -87,9 +87,11 @@ def train(model: nn.Module | None, params: TrainParams):
 
     plotter = LossPlotter()
     # model = BasicMLP(768)
+    print("training model")
     train_loop(model, train_df, val_df, params, plotter)
     plotter.plot()
     save_model(model)
+    print("model trained and saved")
 
 
 def train_loop(
@@ -113,6 +115,7 @@ def train_loop(
 
 def kfold(params: TrainParams) -> nn.Module:
     # TODO: Hyperparameter tuning via Vec<TrainParams>
+    print("performing kfold cv")
     train_data = ProtEmbeddingDataset(
         params.train_df + "project_data/mega_train_embeddings",
         params.train_df + "project_data/mega_train.csv",
@@ -123,7 +126,7 @@ def kfold(params: TrainParams) -> nn.Module:
     )
 
     kf = KFold(params.cv)
-    models = [BasicMLP(768), BasicMLP(768)]
+    models = [BasicMLP(768)]#, BasicMLP(768)]
     val_df = np.zeros((len(models), params.cv))
     train_df = np.zeros((len(models), params.cv))
     plotter = LossPlotter()
