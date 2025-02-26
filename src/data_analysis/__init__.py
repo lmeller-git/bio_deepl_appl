@@ -13,3 +13,5 @@ from src.data_analysis.validation import (
     pearson_corr,
     spearman_corr,
 )
+
+from src.data_analysis.comparison_to_baseline import compare_to_baseline

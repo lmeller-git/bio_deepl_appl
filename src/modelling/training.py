@@ -94,6 +94,21 @@ def train(model: nn.Module | None, params: TrainParams):
     save_model(model)
     save_params(params)
     print("model trained and saved")
+    foo(test_df, model)
+
+
+def foo(df, model):
+    acc = []
+    acc_hat = []
+    for emb, lbl in df:
+        acc_hat.append(model(emb.to(DEVICE)).squeeze())
+        acc.append(lbl.squeeze())
+
+    acc = torch.vstack(acc)
+    acc_hat = torch.vstack(acc_hat)
+    data_analysis.compare_to_baseline(
+        acc, {"model": acc_hat}, ["pearson", "spearman", "rmse"]
+    )
 
 
 def train_loop(
