@@ -2,11 +2,12 @@ import torch
 from torch import nn
 from sklearn.model_selection import KFold
 from tqdm import tqdm
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, sampler
 import numpy as np
 
 # TODO fix circular import
 from src import data_analysis
+from src.modelling.models import BasicMLP
 from src.modelling.eval import LossPlotter
 from src.utils import (
     load_df,
@@ -61,6 +62,7 @@ class TrainParams:
         self.epochs = epochs
         self.lr = lr
         self.train_df = train_df
+        self.batch_size = batch_size
         self.cv = cv
         self.kfold_args = kwargs
         # self.cv_def = cv_definition
@@ -104,23 +106,23 @@ def train_loop(
         step(model, optim, criterion, train, plotter)
         model.eval()
         with torch.no_grad():
-            print(f"Epoch {epoch}:")
+            print(f"\nEpoch {epoch}:")
             validate(model, criterion, test, plotter)
 
 
 def kfold(params: TrainParams) -> nn.Module:
     # TODO: Hyperparameter tuning via Vec<TrainParams>
-    train_df = ProtEmbeddingDataset(
-        params.data + "project_data/mega_train_embeddings",
-        params.data + "project_data/mega_train.csv",
+    train_data = ProtEmbeddingDataset(
+        params.train_df + "project_data/mega_train_embeddings",
+        params.train_df + "project_data/mega_train.csv",
     )
-    val_df = ProtEmbeddingDataset(
-        params.data + "project_data/mega_val_embeddings",
-        params.data + "project_data/mega_val.csv",
+    val_data = ProtEmbeddingDataset(
+        params.train_df + "project_data/mega_val_embeddings",
+        params.train_df + "project_data/mega_val.csv",
     )
 
     kf = KFold(params.cv)
-    models = []
+    models = [BasicMLP(768), BasicMLP(768)]
     val_df = np.zeros((len(models), params.cv))
     train_df = np.zeros((len(models), params.cv))
     plotter = LossPlotter()
@@ -130,7 +132,7 @@ def kfold(params: TrainParams) -> nn.Module:
         base_lr = params.lr
         base_epochs = params.epochs
         base_batch_size = 1024
-        for k, v in params.kfold_args:
+        for k, v in params.kfold_args.items():
             match k:
                 case "d_lr":
                     base_lr += i * v
@@ -144,37 +146,44 @@ def kfold(params: TrainParams) -> nn.Module:
             TrainParams(params.train_df, base_epochs, base_lr, base_batch_size)
         )
 
-    for split, (train, val) in tqdm(enumerate(kf.split(len(train_df)))):
+    for split, (train_idc, val_idc) in tqdm(enumerate(kf.split(train_data.ids))):
+        #print("\n")
+        #print(split, train_idc, val_idc)
+        train_sampler = sampler.SubsetRandomSampler(train_idc)
+        val_sampler = sampler.SubsetRandomSampler(val_idc)
         train_split = DataLoader(
-            train_df[train],
-            batch_size=kfold_params[split].batch_size,
-            shuffle=True,
-            num_workers=16,
-        )
-        val_split = DataLoader(
-            train_df[val],
+            train_data,
             batch_size=kfold_params[split].batch_size,
             shuffle=False,
             num_workers=16,
+            sampler=train_sampler
+        )
+        val_split = DataLoader(
+            train_data,
+            batch_size=kfold_params[split].batch_size,
+            shuffle=False,
+            num_workers=16,
+            sampler=val_sampler
         )
         for m, model in enumerate(models):
             train_loop(model, train_split, val_split, kfold_params[split], plotter)
-            val_df[m, split] = sum(plotter.y["val loss"]) / params.epochs
-            train_df[m, split] = sum(plotter.y["train loss"]) / params.epochs
+            val_df[m, split] = sum(plotter.y["val loss"]) / len(plotter.y["val loss"])
+            train_df[m, split] = sum(plotter.y["train loss"]) / len(plotter.y["train loss"])
             plotter.clear()
-            kfold_plotter.update("val model " + m, val_df[m, split], split)
-            kfold_plotter.update("train model " + m, train_df[m, split], split)
+            kfold_plotter.update("val model " + str(m), val_df[m, split], split)
+            kfold_plotter.update("train model " + str(m), train_df[m, split], split)
             weight_reset(model)
 
-    plotter.plot()
+    kfold_plotter.plot()
+    print(train_df, val_df)
     (train_df, train_std) = (np.mean(train_df, axis=1), np.std(train_df, axis=1))
     (val_df, val_std) = (np.mean(val_df, axis=1), np.std(val_df, axis=1))
-    best_model = np.argmax(train_df)
+    print(train_df, val_df)
+    best_model = np.argmin(train_df)
     print(
         f"Best model in fold {best_model}: {models[best_model]}\ntrain loss: {train_df[best_model]} | train std: {train_std[best_model]} | val loss: {val_df[best_model]} | val std: {val_std[best_model]}"
     )
-    params.cv = 0
-    train(models[best_model], params)
+    train(models[best_model], kfold_params[best_model])
 
 
 def validate(model: nn.Module, criterion: nn.Module, df: DataLoader, plotter: Plotter):

@@ -3,13 +3,14 @@ from argparse import ArgumentParser
 
 
 def main(args):
+    print(args)
     model = BasicMLP(768)
     if args.mode == "cv":
         params = TrainParams(
             args.data,
             args.epochs,
             args.lr,
-            args.batch_size,
+            args.batchsize,
             args.folds,
             d_lr=args.delta_lr,
             d_epoch=args.delta_epochs,
