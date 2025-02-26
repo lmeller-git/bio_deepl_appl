@@ -201,7 +201,7 @@ def main(p: str = "./data/"):
         )  # flatten to create one dimensional vector from 2D sequence
 
     # concatenate and plot
-
+    """
     preds = np.concatenate(preds)
 
     all_y = np.concatenate(all_y)
@@ -219,7 +219,8 @@ def main(p: str = "./data/"):
     print("Pearson r:", scipy.stats.pearsonr(preds, all_y))
 
     print("Spearman r:", scipy.stats.spearmanr(preds, all_y))
-    return (torch.tensor(preds), torch.tensor(all_y))
+    """
+    return (preds, all_y)
 
 
 if __name__ == "__main__":

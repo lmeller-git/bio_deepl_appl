@@ -21,51 +21,51 @@ class ComparisonResult:
         self.rmse = rmse
 
     def __add__(self, rhs):
-        self.rmse += (
-            rhs.rmse
+        self.rmse = (
+            self.rmse + rhs.rmse
             if self.rmse is not None
             else rhs.rmse
             if rhs.rmse is not None
             else None
-        )
-        self.scc += (
-            rhs.scc
+            )
+        self.scc = (
+            self.scc + rhs.scc
             if self.scc is not None
             else rhs.scc
             if rhs.scc is not None
             else None
-        )
-        self.pcc += (
-            rhs.pcc
+            )
+        self.pcc =( 
+            self.pcc + rhs.pcc
             if self.pcc is not None
             else rhs.pcc
             if rhs.pcc is not None
             else None
-        )
+            )
         return self
 
     def __sub__(self, rhs):
-        self.rmse -= (
-            rhs.rmse
+        self.rmse =(
+            self.rmse - rhs.rmse
             if self.rmse is not None
             else rhs.rmse
             if rhs.rmse is not None
             else None
-        )
-        self.scc -= (
-            rhs.scc
+            )
+        self.scc = (
+            self.scc - rhs.scc
             if self.scc is not None
             else rhs.scc
             if rhs.scc is not None
             else None
-        )
-        self.pcc -= (
-            rhs.pcc
+            )
+        self.pcc =( 
+            self.pcc - rhs.pcc
             if self.pcc is not None
             else rhs.pcc
             if rhs.pcc is not None
             else None
-        )
+            )
         return self
 
     def __repr__(self):
@@ -112,19 +112,20 @@ def baseline(
     p: str = "./data/",
 ):
     (baseline_pred, baseline_truth) = blosum.main(p)
-    val_data = data_analysis.validate(baseline_truth, baseline_pred, callbacks)
-    plotter.update(
-        "baseline",
-        ComparisonResult(
-            rmse=val_data["RMSE"] if "RMSE" in val_data.keys() else None,
-            scc=val_data["Spearman Correlation"]
-            if "Spearman Correlation" in val_data.keys()
-            else None,
-            pcc=val_data["Pearson Correlation"]
-            if "Pearson Correlation" in val_data.keys()
-            else None,
-        ),
-    )
+    for (r, t) in zip(baseline_pred, baseline_truth):
+        val_data = data_analysis.validate(torch.tensor(t), torch.tensor(r), callbacks, visualize = False)
+        plotter.update(
+            "baseline",
+            ComparisonResult(
+                rmse=val_data["RMSE"] if "RMSE" in val_data.keys() else None,
+                scc=val_data["Spearman Correlation"]
+                if "Spearman Correlation" in val_data.keys()
+                else None,
+                pcc=val_data["Pearson Correlation"]
+                if "Pearson Correlation" in val_data.keys()
+                else None,
+            ),
+        )
     for embs, lbl in test_data:
         embs.cpu()
         lbl.cpu()
