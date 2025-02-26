@@ -33,7 +33,7 @@ class MLP(nn.Module):
         self.out = self.block(128, 1, act=nn.Sigmoid)
 
     def block(
-        self, in_shape: int, out: float, act: nn.Module = nn.LeakyRelU
+        self, in_shape: int, out: float, act: nn.Module = nn.LeakyReLU
     ) -> nn.Module:
         layer = nn.Sequential(
             nn.Linear(in_shape, out, bias=False),

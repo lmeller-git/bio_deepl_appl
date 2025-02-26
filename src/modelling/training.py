@@ -20,7 +20,7 @@ from src.utils import (
 
 global DEVICE
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-torch.set_default_dtype(torch.float64)
+torch.set_default_dtype(torch.float32)
 torch.manual_seed(42)
 
 """
@@ -127,7 +127,7 @@ def kfold(params: TrainParams) -> nn.Module:
     )
 
     kf = KFold(params.cv)
-    models = [BasicMLP(768), MLP(768)]
+    models = [MLP(768), MLP(768), MLP(768), MLP(768)]
     val_df = np.zeros((len(models), params.cv))
     train_df = np.zeros((len(models), params.cv))
     plotter = LossPlotter()
