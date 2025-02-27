@@ -26,20 +26,6 @@ torch.manual_seed(42)
 
 print("Device set to", DEVICE)
 
-"""
-class CVDefinition:
-    lr_split: float
-    epoch_split: int
-    batch_split: int
-
-    def __init__(
-        self, lr_split: float = 0.0, epoch_split: int = 0, batch_split: int = 0
-    ):
-        self.lr_split = lr_split
-        self.epoch_split = epoch_split
-        self.batch_split = batch_split
-"""
-
 
 class TrainParams:
     epochs: int
@@ -102,23 +88,6 @@ def train(model: nn.Module | None, params: TrainParams):
     # foo(test_df, model, params.train_df)
 
 
-def foo(df, model, p):
-    acc = []
-    acc_hat = []
-    for emb, lbl in df:
-        print("lbl", lbl.shape)
-        print("emb", emb.shape)
-        acc_hat.append(model(emb.to(DEVICE)).squeeze())
-        acc.append(lbl.squeeze())
-
-    acc = torch.hstack(acc, axis=1)
-    acc_hat = torch.hstack(acc_hat)
-    print(acc.shape, acc_hat.shape)
-    data_analysis.compare_to_baseline(
-        acc, {"model": acc_hat}, ["pearson", "spearman", "rmse"]
-    )
-
-
 def train_loop(
     model: nn.Module,
     train: DataLoader,
@@ -127,8 +96,8 @@ def train_loop(
     plotter: Plotter = EmptyPlotter(),
 ):
     optim = torch.optim.Adam(model.parameters(), params.lr)
-    criterion = RMSELoss(0)
-    scheduler_plat = torch.optim.lr_scheduler.ReduceLROnPlateau(optim)
+    criterion = RMSELoss(1e-6)
+    scheduler_plat = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=2)
     scheduler2 = torch.optim.lr_scheduler.ExponentialLR(optim, 0.9)
     model.to(DEVICE)
     for epoch in tqdm(range(params.epochs)):
