@@ -124,14 +124,20 @@ def train_loop(
 ):
     optim = torch.optim.Adam(model.parameters(), params.lr)
     criterion = RMSELoss(0)
+    scheduler_plat = torch.optim.lr_scheduler.ReduceLROnPlateau(optim)
+    schedular2 = torch.optim.lr_scheduler.ExponentialLR(optim, 1e-4)
     model.to(DEVICE)
     for epoch in range(params.epochs):
+        print(f"Epoch {epoch}, Batches: {len(train)}")
         model.train()
         step(model, optim, criterion, train, plotter)
         model.eval()
         with torch.no_grad():
             print(f"\nEpoch {epoch}:")
-            validate(model, criterion, test, plotter)
+            val_loss = validate(model, criterion, test, plotter)
+        scheduler_plat.step(val_loss)
+        if epoch % 2 == 0:
+            schedular2.step()
 
 
 def kfold(params: TrainParams) -> nn.Module:
@@ -174,23 +180,25 @@ def kfold(params: TrainParams) -> nn.Module:
 
     for split, (train_idc, val_idc) in enumerate(kf.split(train_data.ids)):
         print(f"split {split}")
-        train_sampler = sampler.SubsetRandomSampler(train_idc)
-        val_sampler = sampler.SubsetRandomSampler(val_idc)
-        train_split = DataLoader(
-            train_data,
-            batch_size=kfold_params[split].batch_size,
-            shuffle=False,
-            num_workers=16,
-            sampler=train_sampler,
-        )
-        val_split = DataLoader(
-            train_data,
-            batch_size=kfold_params[split].batch_size,
-            shuffle=False,
-            num_workers=16,
-            sampler=val_sampler,
-        )
+
         for m, model in enumerate(models):
+            train_sampler = sampler.SubsetRandomSampler(train_idc)
+            val_sampler = sampler.SubsetRandomSampler(val_idc)
+            train_split = DataLoader(
+                train_data,
+                batch_size=kfold_params[split].batch_size,
+                shuffle=False,
+                num_workers=16,
+                sampler=train_sampler,
+            )
+            val_split = DataLoader(
+                train_data,
+                batch_size=kfold_params[split].batch_size,
+                shuffle=False,
+                num_workers=16,
+                sampler=val_sampler,
+            )
+
             print(f"model {m}")
             train_loop(model, train_split, val_split, kfold_params[split], plotter)
             val_df[m, split] = sum(plotter.y["val loss"]) / len(plotter.y["val loss"])
@@ -212,7 +220,9 @@ def kfold(params: TrainParams) -> nn.Module:
     train(models[best_model], kfold_params[best_model])
 
 
-def validate(model: nn.Module, criterion: nn.Module, df: DataLoader, plotter: Plotter):
+def validate(
+    model: nn.Module, criterion: nn.Module, df: DataLoader, plotter: Plotter
+) -> torch.Tensor:
     losses = []
     scc = []
     pcc = []
@@ -230,6 +240,7 @@ def validate(model: nn.Module, criterion: nn.Module, df: DataLoader, plotter: Pl
     pcc = sum(pcc) / len(pcc)
     plotter.update("val loss", loss.detach().cpu().numpy())
     print(f"\tLoss: {loss:.3f} | scc: {scc:.3f} | pcc: {pcc:.3f}")
+    return loss
 
 
 def step(
@@ -243,11 +254,10 @@ def step(
     for embs, lbl in df:
         (embs, lbl) = (embs.to(DEVICE), lbl.to(DEVICE))
         optim.zero_grad()
-        criterion.zero_grad()
         yhat = model(embs).squeeze()
         loss = criterion(yhat, lbl)
         loss.backward()
         optim.step()
-        losses.append(loss)
+        losses.append(loss.detach())
     losses = sum(losses) / len(losses)
-    plotter.update("train loss", losses.detach().cpu().numpy())
+    plotter.update("train loss", losses.cpu().numpy())

@@ -69,5 +69,8 @@ if __name__ == "__main__":
         default=1024,
         help="Batch size",
     )
+    parser.add_argument(
+        "--out", "-o", type=str, default="./out/", help="dir to save outputs"
+    )
     args = parser.parse_args()
     main(args)
