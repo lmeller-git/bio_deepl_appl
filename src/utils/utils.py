@@ -25,6 +25,9 @@ def weight_reset(m):
     if callable(reset_parameters):
         m.reset_parameters()
 
+    for child in m.children():
+        weight_reset(child)
+
 
 class Plotter(ABC):
     def __init__(self):
