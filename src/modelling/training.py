@@ -158,14 +158,14 @@ def kfold(params: TrainParams) -> nn.Module:
             val_sampler = sampler.SubsetRandomSampler(val_idc)
             train_split = DataLoader(
                 train_data,
-                batch_size=kfold_params[split].batch_size,
+                batch_size=kfold_params[m].batch_size,
                 shuffle=False,
                 num_workers=16,
                 sampler=train_sampler,
             )
             val_split = DataLoader(
                 train_data,
-                batch_size=kfold_params[split].batch_size,
+                batch_size=kfold_params[m].batch_size,
                 shuffle=False,
                 num_workers=16,
                 sampler=val_sampler,
