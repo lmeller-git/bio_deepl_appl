@@ -163,7 +163,7 @@ def kfold(params: TrainParams) -> nn.Module:
     plotter = LossPlotter()
     kfold_plotter = LossPlotter("rmse kfold")
     kfold_params = []
-    for i in tqdm(range(params.cv)):
+    for i in tqdm(range(len(models))):
         base_lr = params.lr
         base_epochs = params.epochs
         base_batch_size = params.batch_size
