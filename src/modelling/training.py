@@ -24,7 +24,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_dtype(torch.float32)
 torch.manual_seed(42)
 
-print("Device set to ", DEVICE)
+print("Device set to", DEVICE)
 
 """
 class CVDefinition:
@@ -230,7 +230,7 @@ def validate(
     scc = []
     pcc = []
     for (embs, mut_embs), lbl in df:
-        (embs.to(DEVICE), mut_embs.to(DEVICE), lbl.to(DEVICE))
+        (embs, mut_embs, lbl) = (embs.to(DEVICE), mut_embs.to(DEVICE), lbl.to(DEVICE))
         yhat = model(embs, mut_embs).squeeze()
         loss = criterion(yhat, lbl)
         losses.append(loss)
@@ -255,7 +255,7 @@ def step(
 ):
     losses = []
     for (embs, mut_embs), lbl in df:
-        (embs.to(DEVICE), mut_embs.to(DEVICE), lbl.to(DEVICE))
+        (embs, mut_embs, lbl) = (embs.to(DEVICE), mut_embs.to(DEVICE), lbl.to(DEVICE))
         optim.zero_grad()
         yhat = model(embs, mut_embs).squeeze()
         loss = criterion(yhat, lbl)
