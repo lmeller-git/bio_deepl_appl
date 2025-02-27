@@ -110,7 +110,37 @@ class ComparisonPlotter(Plotter):
         self.y = y
 
     def plot(self):
-        pass
+        if not isinstance(self.y, dict):
+            print("Expected a dictionary")
+            return self.y
+            
+        first_value = next(iter(self.y.values()), None)
+        if isinstance(first_value, list):
+            print("Expected dict[ComparisonResult] after finalization")
+            return self.y
+            
+        if not all(isinstance(v, ComparisonResult) for v in self.y.values()):
+            print("Expected dict[ComparisonResult] after finalization")
+            return self.y
+
+        metrics = ['rmse', 'scc', 'pcc']
+        models = list(self.y.keys())
+        values = np.array([[self.y[m].rmse, self.y[m].scc, self.y[m].pcc] for m in models])
+
+        x = np.arange(len(metrics))
+        width = 0.2
+            
+        fig, ax = plt.subplots(figsize=(8, 5))  
+            
+        for i, model in enumerate(models):
+            ax.bar(x + i * width, values[i], width, label=model)
+            
+        ax.set_xticks(x + width * (len(models) - 1) / 2)
+        ax.set_xticklabels(metrics)
+        ax.legend()
+        ax.set_ylabel("Metric Value")
+        ax.set_title("Model Performance Comparison")
+        plt.show()
 
     def __repr__(self):
         s = ""
