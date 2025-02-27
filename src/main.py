@@ -1,10 +1,10 @@
-from src import train, TrainParams, BasicMLP, MLP, LeakyMLP
+from src import train, TrainParams, BasicMLP, MLP, LeakyMLP, Siamese
 from argparse import ArgumentParser
 
 
 def main(args):
     print(args)
-    model = LeakyMLP(768)
+    model = LeakyMLP(hidden_dim = (786, 512, 256))#Siamese(hidden_dim=512, n_layers=2) #LeakyMLP(768)
     if args.mode == "cv":
         params = TrainParams(
             args.data,
