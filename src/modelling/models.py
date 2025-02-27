@@ -71,7 +71,7 @@ class Siamese(nn.Module):
         self.shared_layers = nn.ModuleList([block(in_shape, hidden_dim, act)])
         for _ in range(n_layers):
             self.shared_layers.append(block(hidden_dim, hidden_dim, act))
-        self.output_dim = hidden_dim * 3
+        self.output_dim = hidden_dim  # * 3
         self.head = nn.Sequential(
             block(self.output_dim, hidden_dim, drp=0.2, act=act),
             nn.Linear(hidden_dim, out_shape),
@@ -86,7 +86,8 @@ class Siamese(nn.Module):
         wt = self.forward_single(wt)
         mut = self.forward_single(mut)
         diff = mut - wt
-        combined = torch.cat([wt, mut, diff], dim=1)
+        # combined = torch.cat([wt, mut, diff], dim=1)i
+        combined = diff
         return self.head(combined)
 
 
@@ -117,6 +118,28 @@ class ExtendedSiamese(nn.Module):
         ddg = mut - wt
 
         return ddg
+
+
+class TriameseNetwork(nn.Module):
+    def __init__(
+        self,
+        in_shape: int = 768,
+        hidden_dim: int = 256,
+        n_layers: int = 1,
+        out_shape: int = 1,
+        act: nn.Module = nn.ReLU,
+    ):
+        super().__init__()
+        self.siamese_net = Siamese(
+            hidden_dim=hidden_dim, n_layers=1, out_shape=hidden_dim
+        )
+        self.mlp = BasicMLP(hidden_dim=hidden_dim, out_shape=hidden_dim)
+        self.head = BasicMLP(hidden_dim * 2)
+
+    def forward(self, wt, mut, *args, **kwargs):
+        sim = self.siamese_net(wt, mut)
+        reg = self.mlp(mut - wt)
+        return self.head(torch.cat([sim, reg], dim=1))
 
 
 # TODO

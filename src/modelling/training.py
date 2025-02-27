@@ -85,7 +85,6 @@ def train(model: nn.Module | None, params: TrainParams):
     data_analysis.baseline(
         [model.cpu()], ["rmse", "spearman", "pearson"], test_df, p=params.train_df
     )
-    # foo(test_df, model, params.train_df)
 
 
 def train_loop(
