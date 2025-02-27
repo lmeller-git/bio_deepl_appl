@@ -1,4 +1,4 @@
-from src import train, TrainParams, BasicMLP, MLP, Siamese
+from src import train, TrainParams, BasicMLP, MLP, Siamese, dist_plot
 from argparse import ArgumentParser
 from torch import nn
 
@@ -19,6 +19,11 @@ def main(args):
             d_epoch=args.delta_epochs,
             d_batch_size=args.delta_batchsize,
         )
+    elif args.mode == "anal":
+        dist_plot(args.data + "project_data/mega_train.csv")
+        dist_plot(args.data + "project_data/mega_val.csv")
+        dist_plot(args.data + "project_data/mega_test.csv")
+        return
     else:
         params = TrainParams(args.data, args.epochs, args.lr, args.batchsize)
     train(model, params)
@@ -30,6 +35,8 @@ if __name__ == "__main__":
         "--data", "-d", type=str, default="./data/", help="path to project_data dir"
     )
     subparsers = parser.add_subparsers(dest="mode")
+
+    anal_parser = subparsers.add_parser("anal", help="data analysis")
 
     cv_parser = subparsers.add_parser("cv", help="Enable cross-validation")
     cv_parser.add_argument(
