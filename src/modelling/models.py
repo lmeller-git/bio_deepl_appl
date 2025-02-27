@@ -41,10 +41,10 @@ class MLP(nn.Module):
         in_shape: int = 768,
         hidden_dim: tuple[int] = (128, 256, 128),
         out_shape: int = 1,
-        act: nn.Module = nn.ReLU(),
+        act: nn.Module = nn.ReLU,
     ):
         super().__init__()
-        self.input = block(in_shape, hidden_dim[0], act)
+        self.input = block(in_shape, hidden_dim[0], act=act)
         self.hidden = nn.Sequential(
             block(hidden_dim[0], hidden_dim[1], act),
             block(hidden_dim[1], hidden_dim[2], drp=0.2, act=act),
