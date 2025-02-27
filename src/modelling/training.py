@@ -125,10 +125,10 @@ def train_loop(
     optim = torch.optim.Adam(model.parameters(), params.lr)
     criterion = RMSELoss(0)
     scheduler_plat = torch.optim.lr_scheduler.ReduceLROnPlateau(optim)
-    schedular2 = torch.optim.lr_scheduler.ExponentialLR(optim, 1e-4)
+    scheduler2 = torch.optim.lr_scheduler.ExponentialLR(optim, 0.95)
     model.to(DEVICE)
     for epoch in range(params.epochs):
-        print(f"Epoch {epoch}, Batches: {len(train)}")
+        #print(f"Epoch {epoch}, Batches: {len(train)}")
         model.train()
         step(model, optim, criterion, train, plotter)
         model.eval()
@@ -136,9 +136,8 @@ def train_loop(
             print(f"\nEpoch {epoch}:")
             val_loss = validate(model, criterion, test, plotter)
         scheduler_plat.step(val_loss)
-        if epoch % 2 == 0:
-            schedular2.step()
-
+        scheduler2.step()
+        print("\tlr: ", scheduler2._last_lr)
 
 def kfold(params: TrainParams) -> nn.Module:
     # TODO: Hyperparameter tuning via Vec<TrainParams>
