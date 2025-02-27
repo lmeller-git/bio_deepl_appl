@@ -6,7 +6,7 @@ def block(
     in_shape: int, out: float, act: nn.Module = nn.ReLU, drp: float = 0.42
 ) -> nn.Module:
     layer = nn.Sequential(
-        nn.Linear(in_shape, out, bias=False),
+        nn.Linear(in_shape, out),
         act(),
         nn.BatchNorm1d(out),
         nn.Dropout(drp),

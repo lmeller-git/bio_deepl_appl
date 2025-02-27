@@ -110,7 +110,7 @@ def train_loop(
             val_loss = validate(model, criterion, test, plotter)
         scheduler_plat.step(val_loss)
         scheduler2.step()
-        print("\tlr: ", scheduler2._last_lr)
+        print("\tlr:  ", scheduler2._last_lr)
 
 
 def kfold(params: TrainParams) -> nn.Module:
