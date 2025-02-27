@@ -46,7 +46,7 @@ class MLP(nn.Module):
         super().__init__()
         self.input = block(in_shape, hidden_dim[0], act)
         self.hidden = nn.Sequential(
-            block(hidden_dim[0], hidden_dim[1, act]),
+            block(hidden_dim[0], hidden_dim[1], act),
             block(hidden_dim[1], hidden_dim[2], drp=0.2, act=act),
         )
         self.out = nn.Linear(hidden_dim[2], out_shape)
