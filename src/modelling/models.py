@@ -56,7 +56,7 @@ class LeakyMLP(nn.Module):
         )
         self.out = nn.Linear(hidden_dim[2], 1)
 
-    def forward(self, wt: torch.Tensor, mut: torch.Tennsor) -> torch.Tensor:
+    def forward(self, wt: torch.Tensor, mut: torch.Tensor) -> torch.Tensor:
         x = wt - mut
         x = self.input(x)
         x = self.hidden(x)
