@@ -23,6 +23,9 @@ def main(args):
         dist_plot(args.data + "project_data/mega_train.csv")
         dist_plot(args.data + "project_data/mega_val.csv")
         dist_plot(args.data + "project_data/mega_test.csv")
+        cluster_plot(args.data + "project_data/mega_train.csv")
+        cluster_plot(args.data + "project_data/mega_val.csv")
+        cluster_plot(args.data + "project_data/mega_test.csv")
         return
     else:
         params = TrainParams(args.data, args.epochs, args.lr, args.batchsize)
