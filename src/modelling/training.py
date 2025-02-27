@@ -94,7 +94,9 @@ def train(model: nn.Module | None, params: TrainParams):
     save_model(model)
     save_params(params)
     print("model trained and saved")
-    data_analysis.baseline([model.cpu()], ["rmse", "spearman", "pearson"], test_df)
+    data_analysis.baseline(
+        [model.cpu()], ["rmse", "spearman", "pearson"], test_df, p=params.train_df
+    )
     # foo(test_df, model, params.train_df)
 
 
@@ -125,10 +127,10 @@ def train_loop(
     optim = torch.optim.Adam(model.parameters(), params.lr)
     criterion = RMSELoss(0)
     scheduler_plat = torch.optim.lr_scheduler.ReduceLROnPlateau(optim)
-    scheduler2 = torch.optim.lr_scheduler.ExponentialLR(optim, 0.95)
+    scheduler2 = torch.optim.lr_scheduler.ExponentialLR(optim, 0.9)
     model.to(DEVICE)
     for epoch in range(params.epochs):
-        #print(f"Epoch {epoch}, Batches: {len(train)}")
+        # print(f"Epoch {epoch}, Batches: {len(train)}")
         model.train()
         step(model, optim, criterion, train, plotter)
         model.eval()
@@ -138,6 +140,7 @@ def train_loop(
         scheduler_plat.step(val_loss)
         scheduler2.step()
         print("\tlr: ", scheduler2._last_lr)
+
 
 def kfold(params: TrainParams) -> nn.Module:
     # TODO: Hyperparameter tuning via Vec<TrainParams>

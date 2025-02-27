@@ -60,7 +60,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--lr",
         type=float,
-        default=1.0e-4,
+        default=2.0e-3,
         help="Learning rate",
     )
     parser.add_argument(
