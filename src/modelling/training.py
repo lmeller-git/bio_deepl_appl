@@ -7,7 +7,7 @@ import numpy as np
 
 # TODO fix circular import
 from src import data_analysis
-from src.modelling.models import BasicMLP, MLP, LeakyMLP
+from src.modelling.models import BasicMLP, MLP, LeakyMLP, Siamese
 from src.modelling.eval import LossPlotter
 from src.utils import (
     load_df,
@@ -20,7 +20,7 @@ from src.utils import (
 )
 
 global DEVICE
-DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_dtype(torch.float32)
 torch.manual_seed(42)
 
@@ -129,7 +129,7 @@ def train_loop(
     scheduler_plat = torch.optim.lr_scheduler.ReduceLROnPlateau(optim)
     scheduler2 = torch.optim.lr_scheduler.ExponentialLR(optim, 0.9)
     model.to(DEVICE)
-    for epoch in range(params.epochs):
+    for epoch in tqdm(range(params.epochs)):
         # print(f"Epoch {epoch}, Batches: {len(train)}")
         model.train()
         step(model, optim, criterion, train, plotter)
@@ -155,8 +155,7 @@ def kfold(params: TrainParams) -> nn.Module:
     )
 
     kf = KFold(params.cv)
-    # models = [MLP(768), MLP(768), MLP(768), MLP(768)]
-    models = [BasicMLP(768), MLP(768), LeakyMLP(768)]
+    models = [BasicMLP(768), MLP(768), LeakyMLP(768), Siamese()]
     val_df = np.zeros((len(models), params.cv))
     train_df = np.zeros((len(models), params.cv))
     plotter = LossPlotter()
@@ -165,7 +164,7 @@ def kfold(params: TrainParams) -> nn.Module:
     for i in tqdm(range(params.cv)):
         base_lr = params.lr
         base_epochs = params.epochs
-        base_batch_size = 1024
+        base_batch_size = params.batch_size
         for k, v in params.kfold_args.items():
             match k:
                 case "d_lr":
