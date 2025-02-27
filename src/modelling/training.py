@@ -7,7 +7,7 @@ import numpy as np
 
 # TODO fix circular import
 from src import data_analysis
-from src.modelling.models import BasicMLP, MLP, Siamese, ExtendedSiamese
+from src.modelling.models import BasicMLP, MLP, Siamese, ExtendedSiamese, ModelParams
 from src.modelling.eval import LossPlotter
 from src.utils import (
     load_df,
@@ -126,11 +126,12 @@ def kfold(params: TrainParams) -> nn.Module:
 
     kf = KFold(params.cv)
     models = [
-        BasicMLP(768),
-        MLP(768),
-        MLP(768, act=nn.LeakyReLU),
+        BasicMLP(),
+        MLP(),
+        MLP(ModelParams(act=nn.LeakyReLU)),
         Siamese(),
         ExtendedSiamese(),
+        Triamese()
     ]
     val_df = np.zeros((len(models), params.cv))
     train_df = np.zeros((len(models), params.cv))

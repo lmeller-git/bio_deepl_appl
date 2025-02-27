@@ -7,6 +7,7 @@ from src import (
     dist_plot,
     TriameseNetwork,
     cluster_plot,
+    ModelParams
 )
 from argparse import ArgumentParser
 from torch import nn
@@ -15,7 +16,7 @@ from torch import nn
 def main(args):
     print(args)
     # model = Siamese(hidden_dim=512, n_layers=2) #LeakyMLP(768)
-    model = TriameseNetwork(act=nn.LeakyReLU)
+    model = TriameseNetwork(ModelParams(act=nn.LeakyReLU))
     if args.mode == "cv":
         params = TrainParams(
             args.data,

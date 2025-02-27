@@ -4,6 +4,7 @@ from src.modelling.models import (
     ExtendedSiamese,
     Siamese,
     TriameseNetwork,
+    ModelParams
 )
 from src.modelling.training import TrainParams, train
 from src.modelling.eval import LossPlotter
@@ -17,4 +18,5 @@ __all__ = [
     "ExtendedSiamese",
     "Siamese",
     "TriameseNetwork",
+    "ModelParams"
 ]

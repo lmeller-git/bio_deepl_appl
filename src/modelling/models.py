@@ -1,6 +1,14 @@
 from torch import nn
 import torch
+from dataclasses import dataclass
 
+@dataclass
+class ModelParams:
+    in_shape: int = 768
+    out_shape: int = 1
+    hidden_dim: int = 256
+    n_layers: int = 1
+    act: nn.Module = nn.ReLU
 
 def block(
     in_shape: int, out: float, act: nn.Module = nn.ReLU, drp: float = 0.42
@@ -16,17 +24,11 @@ def block(
 
 
 class BasicMLP(nn.Module):
-    def __init__(
-        self,
-        in_shape: int = 768,
-        hidden_dim: int = 128,
-        out_shape: int = 1,
-        act: nn.Module = nn.ReLU,
-    ):
+    def __init__(self, params: ModelParams = ModelParams()):
         super().__init__()
-        self.input = block(in_shape, hidden_dim, act=act)
-        self.hidden = block(hidden_dim, hidden_dim, act=act)
-        self.out = nn.Linear(hidden_dim, out_shape)
+        self.input = block(params.in_shape, params.hidden_dim, act=params.act)
+        self.hidden = block(params.hidden_dim, params.hidden_dim, act=params.act)
+        self.out = nn.Linear(params.hidden_dim, params.out_shape)
 
     def forward(self, wt, mut, *args, **kwargs):
         x = mut - wt
@@ -36,20 +38,13 @@ class BasicMLP(nn.Module):
 
 
 class MLP(nn.Module):
-    def __init__(
-        self,
-        in_shape: int = 768,
-        hidden_dim: tuple[int] = (128, 256, 128),
-        out_shape: int = 1,
-        act: nn.Module = nn.ReLU,
-    ):
+    def __init__(self, params: ModelParams = ModelParams()):
         super().__init__()
-        self.input = block(in_shape, hidden_dim[0], act=act)
-        self.hidden = nn.Sequential(
-            block(hidden_dim[0], hidden_dim[1], act),
-            block(hidden_dim[1], hidden_dim[2], drp=0.2, act=act),
-        )
-        self.out = nn.Linear(hidden_dim[2], out_shape)
+        self.input = block(params.in_shape, params.hidden_dim, act=params.act)
+        self.hidden = nn.ModuleList() 
+        for _ in range(params.n_layers):
+            self.hidden.append(block(params.hidden_dim, params.hidden_dim, act=params.act))
+        self.out = nn.Linear(params.hidden_dim, params.out_shape)
 
     def forward(self, wt, mut, *args, **kwargs):
         x = mut - wt
@@ -59,22 +54,15 @@ class MLP(nn.Module):
 
 
 class Siamese(nn.Module):
-    def __init__(
-        self,
-        in_shape: int = 768,
-        hidden_dim: int = 256,
-        n_layers: int = 1,
-        out_shape: int = 1,
-        act: nn.Module = nn.ReLU,
-    ):
+    def __init__(self, params: ModelParams = ModelParams()):
         super().__init__()
-        self.shared_layers = nn.ModuleList([block(in_shape, hidden_dim, act)])
-        for _ in range(n_layers):
-            self.shared_layers.append(block(hidden_dim, hidden_dim, act))
-        self.output_dim = hidden_dim  # * 3
+        self.shared_layers = nn.ModuleList([block(params.in_shape, params.hidden_dim, act=params.act)])
+        for _ in range(params.n_layers):
+            self.shared_layers.append(block(params.hidden_dim, params.hidden_dim, act=params.act))
+        self.output_dim = params.hidden_dim  # * 3
         self.head = nn.Sequential(
-            block(self.output_dim, hidden_dim, drp=0.2, act=act),
-            nn.Linear(hidden_dim, out_shape),
+            block(self.output_dim, params.hidden_dim, drp=0.2, act=params.act),
+            nn.Linear(params.hidden_dim, params.out_shape),
         )
 
     def forward_single(self, x):
@@ -92,22 +80,15 @@ class Siamese(nn.Module):
 
 
 class ExtendedSiamese(nn.Module):
-    def __init__(
-        self,
-        in_shape: int = 768,
-        hidden_dim: int = 256,
-        n_layers: int = 1,
-        out_shape: int = 1,
-        act: nn.Module = nn.ReLU,
-    ):
+    def __init__(self, params: ModelParams = ModelParams()):
         super().__init__()
         # TODO LA/CA?
-        self.shared_layers = nn.ModuleList([block(in_shape, hidden_dim, act)])
-        for _ in range(n_layers):
-            self.shared_layers.append(block(hidden_dim, hidden_dim, act))
+        self.shared_layers = nn.ModuleList([block(params.in_shape, params.hidden_dim, act=params.act)])
+        for _ in range(params.n_layers):
+            self.shared_layers.append(block(params.hidden_dim, params.hidden_dim, act=params.act))
 
         self.shared_layers.append(
-            block(hidden_dim, out_shape, act=nn.Identity, drp=0.0)
+            block(params.hidden_dim, params.out_shape, act=nn.Identity, drp=0.0)
         )
 
     def forward(self, wt, mut, *args, **kwargs):
@@ -119,29 +100,22 @@ class ExtendedSiamese(nn.Module):
 
         return ddg
 
-
+    
 class TriameseNetwork(nn.Module):
-    def __init__(
-        self,
-        in_shape: int = 768,
-        hidden_dim: int = 256,
-        n_layers: int = 1,
-        out_shape: int = 1,
-        act: nn.Module = nn.ReLU,
-    ):
+    def __init__(self, siamese_params: ModelParams = ModelParams(out_shape=256), mlp_params: ModelParams = ModelParams(out_shape=256), head_params: ModelParams = ModelParams(in_shape=512)):
         super().__init__()
         self.siamese_net = Siamese(
-            hidden_dim=hidden_dim, n_layers=1, out_shape=hidden_dim, act=act
+            hidden_dim=siamese_params.hidden_dim, n_layers=siamese_params.n_layers, out_shape=siamese_params.out_shape, act=siamese_params.act
         )
-        self.mlp = BasicMLP(hidden_dim=hidden_dim, out_shape=hidden_dim, act=act)
+        self.mlp = MLP(hidden_dim=mlp_params.hidden_dim, out_shape=mlp_params.hidden_dim, act=mlp_params.act)
         self.head = nn.Sequential(
-            block(hidden_dim * 2, hidden_dim, act=act, drp=0.3),
-            nn.Linear(hidden_dim, out_shape),
+            block(mlp_params.out_shape + siamese_params.out_shape, head_params.hidden_dim, act=head_params.act, drp=0.3),
+            nn.Linear(head_params.hidden_dim, head_params.out_shape),
         )
 
     def forward(self, wt, mut, *args, **kwargs):
         sim = self.siamese_net(wt, mut)
-        reg = self.mlp(mut, wt)
+        reg = self.mlp(wt, mut)
         return self.head(torch.cat([sim, reg], dim=1))
 
 
