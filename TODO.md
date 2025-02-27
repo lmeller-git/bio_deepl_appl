@@ -2,9 +2,9 @@
 
 ## General
 - model
-- kfold
-- validation
-- infra (cli, ...)
+- kfold done
+- validation 
+- infra (cli, ...) done
 - presentation
 - paper
 - context (?)
@@ -15,5 +15,5 @@
 
 
 ## Louis
-- kfold
-- infra
+- kfold done 
+- infra done

@@ -88,7 +88,7 @@ class ComparisonResult:
 
 
 class ComparisonPlotter(Plotter):
-    y: dict[ComparisonResult]
+    y: dict[ComparisonResult | list[ComparisonResult]]
 
     def __init__(self):
         super().__init__()
