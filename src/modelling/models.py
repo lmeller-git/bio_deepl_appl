@@ -129,8 +129,9 @@ class ExtendedSiamese(nn.Module):
         )
 
     def forward(self, wt, mut, *args, **kwargs):
-        wt = self.shared_layers(wt)
-        mut = self.shared_layers(mut)
+        for layer in self.shared_layers:
+            wt = layer(wt)
+            mut = layer(mut)
 
         ddg = mut - wt
 
