@@ -131,14 +131,17 @@ class TriameseNetwork(nn.Module):
     ):
         super().__init__()
         self.siamese_net = Siamese(
-            hidden_dim=hidden_dim, n_layers=1, out_shape=hidden_dim
+            hidden_dim=hidden_dim, n_layers=1, out_shape=hidden_dim, act=act
         )
-        self.mlp = BasicMLP(hidden_dim=hidden_dim, out_shape=hidden_dim)
-        self.head = BasicMLP(hidden_dim * 2)
+        self.mlp = BasicMLP(hidden_dim=hidden_dim, out_shape=hidden_dim, act=act)
+        self.head = nn.Sequential(
+            block(hidden_dim * 2, hidden_dim, act=act, drp=0.3),
+            nn.Linear(hidden_dim, out_shape),
+        )
 
     def forward(self, wt, mut, *args, **kwargs):
         sim = self.siamese_net(wt, mut)
-        reg = self.mlp(mut - wt)
+        reg = self.mlp(mut, wt)
         return self.head(torch.cat([sim, reg], dim=1))
 
 

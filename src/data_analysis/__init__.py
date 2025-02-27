@@ -16,6 +16,7 @@ from src.data_analysis.validation import (
 
 from src.data_analysis.comparison_to_baseline import baseline
 from src.data_analysis.anal import DistPlotter, dist_plot
+from src.data_analysis.cluster import cluster_plot
 
 
-__all__ = ["baseline", "dist_plot", "validate"]
+__all__ = ["baseline", "dist_plot", "validate", "cluster_plot"]

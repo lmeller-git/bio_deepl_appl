@@ -1,13 +1,21 @@
-from src import train, TrainParams, BasicMLP, MLP, Siamese, dist_plot
+from src import (
+    train,
+    TrainParams,
+    BasicMLP,
+    MLP,
+    Siamese,
+    dist_plot,
+    TriameseNetwork,
+    cluster_plot,
+)
 from argparse import ArgumentParser
 from torch import nn
 
 
 def main(args):
     print(args)
-    model = MLP(
-        hidden_dim=(786, 512, 256), act=nn.LeakyReLU
-    )  # Siamese(hidden_dim=512, n_layers=2) #LeakyMLP(768)
+    # model = Siamese(hidden_dim=512, n_layers=2) #LeakyMLP(768)
+    model = TriameseNetwork(act=nn.LeakyReLU)
     if args.mode == "cv":
         params = TrainParams(
             args.data,
