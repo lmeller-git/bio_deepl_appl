@@ -89,10 +89,10 @@ class ProtEmbeddingDataset(Dataset):
         label = self.labels[idx]  # ddG value
         # simple difference between embedings
         # TODO think of better ways (maybe Siamese network?)
-        tensor = tensor_wt - tensor
+        # tensor = tensor_wt - tensor
         # returns a tuple of the input embedding and the target ddG values
 
-        return tensor, label.float()
+        return (tensor_wt, tensor), label.float()
 
 
 # usage

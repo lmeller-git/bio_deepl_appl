@@ -24,6 +24,8 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_dtype(torch.float32)
 torch.manual_seed(42)
 
+print("Device set to ", DEVICE)
+
 """
 class CVDefinition:
     lr_split: float
@@ -216,7 +218,7 @@ def kfold(params: TrainParams) -> nn.Module:
     (val_df, val_std) = (np.mean(val_df, axis=1), np.std(val_df, axis=1))
     best_model = np.argmin(train_df)
     print(
-        f"Best model in fold {best_model}: {models[best_model]}\ntrain loss: {train_df[best_model]} | train std: {train_std[best_model]} | val loss: {val_df[best_model]} | val std: {val_std[best_model]}\nParams: {kfold_params[best_model]}"
+        f"Best model: model {best_model}: {models[best_model]}\ntrain loss: {train_df[best_model]} | train std: {train_std[best_model]} | val loss: {val_df[best_model]} | val std: {val_std[best_model]}\nParams: {kfold_params[best_model]}"
     )
     train(models[best_model], kfold_params[best_model])
 
@@ -227,9 +229,9 @@ def validate(
     losses = []
     scc = []
     pcc = []
-    for embs, lbl in df:
-        (embs, lbl) = (embs.to(DEVICE), lbl.to(DEVICE))
-        yhat = model(embs).squeeze()
+    for (embs, mut_embs), lbl in df:
+        (embs.to(DEVICE), mut_embs.to(DEVICE), lbl.to(DEVICE))
+        yhat = model(embs, mut_embs).squeeze()
         loss = criterion(yhat, lbl)
         losses.append(loss)
         r = data_analysis.validate(lbl, yhat, ["pearson", "spearman"], False)
@@ -252,10 +254,10 @@ def step(
     plotter: Plotter,
 ):
     losses = []
-    for embs, lbl in df:
-        (embs, lbl) = (embs.to(DEVICE), lbl.to(DEVICE))
+    for (embs, mut_embs), lbl in df:
+        (embs.to(DEVICE), mut_embs.to(DEVICE), lbl.to(DEVICE))
         optim.zero_grad()
-        yhat = model(embs).squeeze()
+        yhat = model(embs, mut_embs).squeeze()
         loss = criterion(yhat, lbl)
         loss.backward()
         optim.step()

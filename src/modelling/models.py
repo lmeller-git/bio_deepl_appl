@@ -22,7 +22,8 @@ class BasicMLP(nn.Module):
         self.hidden = block(hidden_dim, hidden_dim)
         self.out = nn.Linear(hidden_dim, 1)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, wt: torch.Tensor, mut) -> torch.Tensor:
+        x = wt - mut
         x = self.input(x)
         x = self.hidden(x)
         return self.out(x)
@@ -38,7 +39,8 @@ class MLP(nn.Module):
         )
         self.out = nn.Linear(hidden_dim[2], 1)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, wt: torch.Tensor, mut: torch.Tensor) -> torch.Tensor:
+        x = wt - mut
         x = self.input(x)
         x = self.hidden(x)
         return self.out(x)
@@ -54,7 +56,8 @@ class LeakyMLP(nn.Module):
         )
         self.out = nn.Linear(hidden_dim[2], 1)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, wt: torch.Tensor, mut: torch.Tennsor) -> torch.Tensor:
+        x = wt - mut
         x = self.input(x)
         x = self.hidden(x)
         return self.out(x)
