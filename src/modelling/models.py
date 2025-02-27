@@ -41,34 +41,13 @@ class MLP(nn.Module):
         in_shape: int = 768,
         hidden_dim: tuple[int] = (128, 256, 128),
         out_shape: int = 1,
+        act: nn.Module = nn.ReLU(),
     ):
         super().__init__()
-        self.input = block(in_shape, hidden_dim[0])
+        self.input = block(in_shape, hidden_dim[0], act)
         self.hidden = nn.Sequential(
-            block(hidden_dim[0], hidden_dim[1]),
-            block(hidden_dim[1], hidden_dim[2], drp=0.2),
-        )
-        self.out = nn.Linear(hidden_dim[2], out_shape)
-
-    def forward(self, wt, mut, *args, **kwargs):
-        x = mut - wt
-        x = self.input(x)
-        x = self.hidden(x)
-        return self.out(x)
-
-
-class LeakyMLP(nn.Module):
-    def __init__(
-        self,
-        in_shape: int = 768,
-        hidden_dim: tuple[int] = (128, 256, 128),
-        out_shape: int = 1,
-    ):
-        super().__init__()
-        self.input = block(in_shape, hidden_dim[0])
-        self.hidden = nn.Sequential(
-            block(hidden_dim[0], hidden_dim[1], act=nn.LeakyReLU),
-            block(hidden_dim[1], hidden_dim[2], act=nn.LeakyReLU, drp=0.2),
+            block(hidden_dim[0], hidden_dim[1, act]),
+            block(hidden_dim[1], hidden_dim[2], drp=0.2, act=act),
         )
         self.out = nn.Linear(hidden_dim[2], out_shape)
 
@@ -86,14 +65,15 @@ class Siamese(nn.Module):
         hidden_dim: int = 256,
         n_layers: int = 1,
         out_shape: int = 1,
+        act: nn.Module = nn.ReLU,
     ):
         super().__init__()
-        self.shared_layers = nn.ModuleList([block(in_shape, hidden_dim)])
+        self.shared_layers = nn.ModuleList([block(in_shape, hidden_dim, act)])
         for _ in range(n_layers):
-            self.shared_layers.append(block(hidden_dim, hidden_dim))
+            self.shared_layers.append(block(hidden_dim, hidden_dim, act))
         self.output_dim = hidden_dim * 3
         self.head = nn.Sequential(
-            block(self.output_dim, hidden_dim, drp=0.2),
+            block(self.output_dim, hidden_dim, drp=0.2, act=act),
             nn.Linear(hidden_dim, out_shape),
         )
 
@@ -117,12 +97,13 @@ class ExtendedSiamese(nn.Module):
         hidden_dim: int = 256,
         n_layers: int = 1,
         out_shape: int = 1,
+        act: nn.Module = nn.ReLU,
     ):
         super().__init__()
-        # TODO LA?
-        self.shared_layers = nn.ModuleList([block(in_shape, hidden_dim)])
+        # TODO LA/CA?
+        self.shared_layers = nn.ModuleList([block(in_shape, hidden_dim, act)])
         for _ in range(n_layers):
-            self.shared_layers.append(block(hidden_dim, hidden_dim))
+            self.shared_layers.append(block(hidden_dim, hidden_dim, act))
 
         self.shared_layers.append(
             block(hidden_dim, out_shape, act=nn.Identity, drp=0.0)
