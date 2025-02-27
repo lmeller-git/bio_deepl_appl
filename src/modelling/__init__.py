@@ -8,6 +8,6 @@ __all__ = [
     "train",
     "LossPlotter",
     "MLP",
-    "LeakyMLP",
     "ExtendedSiamese",
+    "Siamese",
 ]
