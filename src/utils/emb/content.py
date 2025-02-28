@@ -158,10 +158,11 @@ def validate(model: nn.Module, val: DataLoader):
     plt.xlabel("Predicted ddG")
 
     plt.ylabel("Measured ddG")
+    plt.show()
 
     # get RMSE, Pearson and Spearman correlation
 
-    print("RMSE:", skmetrics.mean_squared_error(all_y, preds, squared="False"))
+    print("RMSE:", skmetrics.mean_squared_error(all_y, preds))
 
     print("Pearson r:", scipy.stats.pearsonr(preds, all_y))
 
