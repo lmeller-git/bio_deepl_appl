@@ -20,7 +20,7 @@ from torch import nn
 
 import torch
 
-
+import src.data_analysis.validation as d_validation
 from torch.utils.data import DataLoader, Dataset
 
 # the dataloaders load the tensors from memory one by one, could potentially become a bottleneck
@@ -155,7 +155,7 @@ def cross_validate(
         all_y.append(y.detach().numpy())
 
     # concatenate and plot
-
+    # assuming data is not shuffled:
     preds = np.concatenate(preds)
 
     all_y = np.concatenate(all_y)
@@ -166,12 +166,84 @@ def cross_validate(
     df["mutation"] = df["mut_from"] + df["mut_to"]
     df.drop(columns=["mut_from", "mut_to"], inplace=True)
     df.dropna(subset=["mutation"], inplace=True)
-
-
     df.dropna(inplace=True)
     df["y"] = all_y
     df["pred"] = preds
-    sns.scatterplot(data=df, x="pred", y="y", hue="mutation", palette="tab10")
+
+
+    groups = set(df["mutation"])
+
+    group_data = []
+
+    for group in groups:
+        if len(df.loc[df["mutation"] == group]) < 2:
+            continue
+        res = d_validation.validate(
+            df.loc[df["mutation"] == group, "y"],
+            df.loc[df["mutation"] == group, "pred"],
+            performance_metric=["rmse", "pearson", "spearman"], visualize = False
+        )
+        group_data.append((group, res))
+
+
+    group_data.sort(
+        key=lambda x: x[1]["Pearson Correlation"], reverse = True
+    )
+
+
+    
+
+    df_h = pd.concat(
+        [
+            pd.DataFrame(d.items(), columns=["Category", "Value"]).assign(Group=n)
+            for n, d in group_data[:10]
+        ]
+    )
+
+    
+    df_l = pd.concat(
+        [
+            pd.DataFrame(d.items(), columns=["Category", "Value"]).assign(Group=n)
+            for n, d in group_data[-10:]
+        ]
+    )
+
+    
+    group_counts = df["mutation"].value_counts().reset_index()
+    group_counts.columns = ["mutation", "Occurrences"]
+
+    selected_groups = list(df_h["Group"].unique()) + list(df_l["Group"].unique())
+    group_counts = group_counts[group_counts["mutation"].isin(selected_groups)]
+    
+    
+    fig, axes = plt.subplots(1, 3, figsize=(30, 6))
+
+    sns.barplot(data=df_h, x="Category", y="Value", hue="Group", palette="viridis", ax=axes[0])
+    axes[0].set_xlabel("Category")
+    axes[0].set_ylabel("Value")
+    axes[0].set_title("Top 10 Groups by Pearson Correlation")
+    axes[0].legend(title="Group")
+
+    sns.barplot(data=df_l, x="Category", y="Value", hue="Group", palette="magma", ax=axes[1])
+    axes[1].set_xlabel("Category")
+    axes[1].set_ylabel("Value")
+    axes[1].set_title("Bottom 10 Groups by Pearson Correlation")
+    axes[1].legend(title="Group")
+ 
+    sns.barplot(data=group_counts, x="mutation", y="Occurrences", palette="crest", ax=axes[2])
+    axes[2].set_xlabel("Mutation")
+    axes[2].set_ylabel("Occurrences")
+    axes[2].set_title("Occurrences of Shown Groups")
+    axes[2].tick_params(axis='x', rotation=45)
+
+    plt.tight_layout()
+    plt.show()    
+    return
+
+    
+        
+    sns.scatterplot(data=df, x="pred", y="y", hue="mutation", palette="viridis")
+
     plt.xlabel("Predicted ddG")
 
     plt.ylabel("Measured ddG")
