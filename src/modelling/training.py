@@ -90,7 +90,7 @@ def train(model: nn.Module | None, params: TrainParams):
     save_params(params)
     print("model trained and saved")
     data_analysis.baseline(
-        [model.cpu()], ["rmse", "spearman", "pearson"], test_df, p=params.train_df
+        [model.cpu()], ["rmse", "spearman", "pearson"], val_df, p=params.train_df
     )
 
 
