@@ -129,6 +129,51 @@ def load_df(p: str, batch_size: int = 1024):
     return (dataloader_train, dataloader_val, dataloader_test)
 
 
+def cross_validate(
+    model: nn.Module, val: DataLoader, p: str = "./data/project_data/mega_val.csv"
+):
+    model.cpu()
+    # your code
+    preds = []
+
+    all_y = []
+
+    # save all predictions
+
+    for (wt, mut), y in val:
+        # adjust this to work with your model
+
+        y_hat = model(wt, mut)
+
+        preds.append(y_hat.squeeze().detach().numpy())
+
+        all_y.append(y.detach().numpy())
+
+    # concatenate and plot
+
+    preds = np.concatenate(preds)
+
+    all_y = np.concatenate(all_y)
+
+    df = pd.read_csv(p)
+    df = df["mut_type"]
+    df["mutation"] = df["mut_type"].str.extract(r"([A-Z])\d*([A-Z])")
+    df["mutation"] = df["mutation"].apply(
+        lambda x: f"{x[0]}{x[1]}" if isinstance(x, tuple) else pd.NA
+    )
+
+    df.dropna(inplace=True)
+    df["y"] = all_y
+    df["pred"] = preds
+
+    sns.scatterplot(data=df, x="pred", y="y", hue="mutation", palette="viridis")
+
+    plt.xlabel("Predicted ddG")
+
+    plt.ylabel("Measured ddG")
+    plt.show()
+
+
 def validate(model: nn.Module, val: DataLoader):
     model.cpu()
     # your code

@@ -1,4 +1,9 @@
-from src.utils.emb.content import load_df, ProtEmbeddingDataset, validate
+from src.utils.emb.content import (
+    load_df,
+    ProtEmbeddingDataset,
+    validate,
+    cross_validate,
+)
 from src.utils.utils import (
     Plotter,
     save_model,
@@ -19,4 +24,5 @@ __all__ = [
     "weight_reset",
     "save_params",
     "validate",
+    "cross_validate",
 ]
