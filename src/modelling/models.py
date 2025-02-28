@@ -53,7 +53,8 @@ class MLP(nn.Module):
     def forward(self, wt, mut, *args, **kwargs):
         x = mut - wt
         x = self.input(x)
-        x = self.hidden(x)
+        for layer in self.hidden:
+            x = layer(x)
         return self.out(x)
 
 
