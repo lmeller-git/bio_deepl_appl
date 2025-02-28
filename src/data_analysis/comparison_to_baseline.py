@@ -178,8 +178,8 @@ def baseline(
     all_y = []
     all_yhat = [[] for _ in range(len(models))]
     for (embs, embs_mut), lbl in test_data:
-        embs.cpu()
-        lbl.cpu()
+        embs= embs.cpu()
+        lbl = lbl.cpu()
         embs_mut.cpu()
         for i, model in enumerate(models):
             yhat = model(embs, embs_mut).squeeze()

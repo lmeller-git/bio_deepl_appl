@@ -138,11 +138,15 @@ def cross_validate(
 
     all_y = []
 
-    # save all predictions
+    # DO NOT REMOVE THIS PRINT STATEMENT (data race or sth like that)
+    print("")
+    print("")
 
+    # save all predictions
     for (wt, mut), y in val:
         # adjust this to work with your model
-
+        wt = wt.cpu()
+        mut = mut.cpu()
         y_hat = model(wt, mut)
 
         preds.append(y_hat.squeeze().detach().numpy())
@@ -156,18 +160,17 @@ def cross_validate(
     all_y = np.concatenate(all_y)
 
     df = pd.read_csv(p)
-    df = df["mut_type"]
-    df["mutation"] = df["mut_type"].str.extract(r"([A-Z])\d*([A-Z])")
-    df["mutation"] = df["mutation"].apply(
-        lambda x: f"{x[0]}{x[1]}" if isinstance(x, tuple) else pd.NA
-    )
+    df = df[["mut_type"]]
+    df[["mut_from", "mut_to"]] = df["mut_type"].str.extract(r"([A-Z])\d*([A-Z])")
+    df["mutation"] = df["mut_from"] + df["mut_to"]
+    df.drop(columns=["mut_from", "mut_to"], inplace=True)
+    df.dropna(subset=["mutation"], inplace=True)
+
 
     df.dropna(inplace=True)
     df["y"] = all_y
     df["pred"] = preds
-
-    sns.scatterplot(data=df, x="pred", y="y", hue="mutation", palette="viridis")
-
+    sns.scatterplot(data=df, x="pred", y="y", hue="mutation", palette="tab10")
     plt.xlabel("Predicted ddG")
 
     plt.ylabel("Measured ddG")
@@ -185,7 +188,8 @@ def validate(model: nn.Module, val: DataLoader):
 
     for (wt, mut), y in val:
         # adjust this to work with your model
-
+        wt = wt.cpu()
+        mut = mut.cpu()
         y_hat = model(wt, mut)
 
         preds.append(y_hat.squeeze().detach().numpy())

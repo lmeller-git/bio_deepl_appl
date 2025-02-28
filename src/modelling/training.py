@@ -96,7 +96,9 @@ def train(model: nn.Module | None, params: TrainParams):
         [model.cpu()], ["rmse", "spearman", "pearson"], val_df, p=params.train_df
     )
     utils.validate(model, val_df)
-    cross_validate(model, val_df, params.train_df + "project_data.mega_val.csv")
+    #train_df, val_df, test_df = load_df(params.train_df, params.batch_size)
+
+    utils.cross_validate(model, val_df, params.train_df + "project_data/mega_val.csv")
 
 
 def train_loop(
