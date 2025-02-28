@@ -159,31 +159,38 @@ def baseline(
     p: str = "./data/",
 ):
     (baseline_pred, baseline_truth) = blosum.main(p)
-    for r, t in zip(baseline_pred, baseline_truth):
-        val_data = data_analysis.validate(
-            torch.tensor(t), torch.tensor(r), callbacks, visualize=False
-        )
-        plotter.update(
-            "baseline",
-            ComparisonResult(
-                rmse=val_data["RMSE"] if "RMSE" in val_data.keys() else None,
-                scc=val_data["Spearman Correlation"]
-                if "Spearman Correlation" in val_data.keys()
-                else None,
-                pcc=val_data["Pearson Correlation"]
-                if "Pearson Correlation" in val_data.keys()
-                else None,
-            ),
-        )
+
+    val_data = data_analysis.validate(
+        baseline_truth, baseline_pred, callbacks, visualize=False
+    )
+    plotter.update(
+        "baseline",
+        ComparisonResult(
+            rmse=val_data["RMSE"] if "RMSE" in val_data.keys() else None,
+            scc=val_data["Spearman Correlation"]
+            if "Spearman Correlation" in val_data.keys()
+            else None,
+            pcc=val_data["Pearson Correlation"]
+            if "Pearson Correlation" in val_data.keys()
+            else None,
+        ),
+    )
+    all_y = []
+    all_yhat = [[] for _ in range(len(models))]
     for (embs, embs_mut), lbl in test_data:
         embs.cpu()
         lbl.cpu()
         embs_mut.cpu()
         for i, model in enumerate(models):
             yhat = model(embs, embs_mut).squeeze()
-            val_data = data_analysis.validate(
-                lbl, yhat, performance_metric=callbacks, visualize=False
-            )
+            all_yhat[i].append(yhat.detach().numpy())
+        all_y.append(lbl.detach().numpy())
+
+    all_y = np.concatenate(all_y)
+    all_yhat = [np.concatenate(yhat) for yhat in all_yhat]
+
+    for i in range(len(models)):
+        val_data = data_analysis.validate(all_y, all_yhat[i])
         plotter.update(
             "model " + str(i),
             ComparisonResult(

@@ -20,14 +20,14 @@ def spearman_corr(y_true, y_pred):
 
 
 def validate(
-    y_true, y_pred, performance_metric: list[str] = [], visualize: bool = True
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    performance_metric: list[str] = [],
+    visualize: bool = True,
 ):
     # return {"Pearson Correlation": 0, "Spearman Correlation": 0, "RMSE": 0}
     # TODO
     results = {}
-
-    y_true = y_true.cpu().detach().numpy()
-    y_pred = y_pred.cpu().detach().numpy()
 
     if performance_metric is None:
         performance_metric = ["rmse", "pearson", "spearman"]

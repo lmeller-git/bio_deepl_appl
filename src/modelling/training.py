@@ -235,7 +235,7 @@ def validate(
     all_y = np.concatenate(all_y)
     preds = np.concatenate(preds)
     loss = sum(losses) / len(losses)
-    r = data_analysis.validate(lbl, yhat, ["pearson", "spearman"], False)
+    r = data_analysis.validate(all_y, preds, ["pearson", "spearman"], False)
     scc = r["Spearman Correlation"]
     pcc = r["Pearson Correlation"]
 
