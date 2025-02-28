@@ -201,11 +201,11 @@ def main(p: str = "./data/"):
         )  # flatten to create one dimensional vector from 2D sequence
 
     # concatenate and plot
-    """
+
     preds = np.concatenate(preds)
 
     all_y = np.concatenate(all_y)
-
+    """
     sns.regplot(x=preds, y=all_y)
 
     plt.xlabel("Predicted ddG")

@@ -190,7 +190,7 @@ def baseline(
     all_yhat = [np.concatenate(yhat) for yhat in all_yhat]
 
     for i in range(len(models)):
-        val_data = data_analysis.validate(all_y, all_yhat[i])
+        val_data = data_analysis.validate(all_y, all_yhat[i], callbacks, False)
         plotter.update(
             "model " + str(i),
             ComparisonResult(
