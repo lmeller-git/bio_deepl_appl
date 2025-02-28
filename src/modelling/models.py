@@ -2,6 +2,7 @@ from torch import nn
 import torch
 from dataclasses import dataclass
 
+
 @dataclass
 class ModelParams:
     in_shape: int = 768
@@ -9,6 +10,7 @@ class ModelParams:
     hidden_dim: int = 256
     n_layers: int = 1
     act: nn.Module = nn.ReLU
+
 
 def block(
     in_shape: int, out: float, act: nn.Module = nn.ReLU, drp: float = 0.42
@@ -41,9 +43,11 @@ class MLP(nn.Module):
     def __init__(self, params: ModelParams = ModelParams()):
         super().__init__()
         self.input = block(params.in_shape, params.hidden_dim, act=params.act)
-        self.hidden = nn.ModuleList() 
+        self.hidden = nn.ModuleList()
         for _ in range(params.n_layers):
-            self.hidden.append(block(params.hidden_dim, params.hidden_dim, act=params.act))
+            self.hidden.append(
+                block(params.hidden_dim, params.hidden_dim, act=params.act)
+            )
         self.out = nn.Linear(params.hidden_dim, params.out_shape)
 
     def forward(self, wt, mut, *args, **kwargs):
@@ -56,9 +60,13 @@ class MLP(nn.Module):
 class Siamese(nn.Module):
     def __init__(self, params: ModelParams = ModelParams()):
         super().__init__()
-        self.shared_layers = nn.ModuleList([block(params.in_shape, params.hidden_dim, act=params.act)])
+        self.shared_layers = nn.ModuleList(
+            [block(params.in_shape, params.hidden_dim, act=params.act)]
+        )
         for _ in range(params.n_layers):
-            self.shared_layers.append(block(params.hidden_dim, params.hidden_dim, act=params.act))
+            self.shared_layers.append(
+                block(params.hidden_dim, params.hidden_dim, act=params.act)
+            )
         self.output_dim = params.hidden_dim  # * 3
         self.head = nn.Sequential(
             block(self.output_dim, params.hidden_dim, drp=0.2, act=params.act),
@@ -83,9 +91,13 @@ class ExtendedSiamese(nn.Module):
     def __init__(self, params: ModelParams = ModelParams()):
         super().__init__()
         # TODO LA/CA?
-        self.shared_layers = nn.ModuleList([block(params.in_shape, params.hidden_dim, act=params.act)])
+        self.shared_layers = nn.ModuleList(
+            [block(params.in_shape, params.hidden_dim, act=params.act)]
+        )
         for _ in range(params.n_layers):
-            self.shared_layers.append(block(params.hidden_dim, params.hidden_dim, act=params.act))
+            self.shared_layers.append(
+                block(params.hidden_dim, params.hidden_dim, act=params.act)
+            )
 
         self.shared_layers.append(
             block(params.hidden_dim, params.out_shape, act=nn.Identity, drp=0.0)
@@ -100,16 +112,24 @@ class ExtendedSiamese(nn.Module):
 
         return ddg
 
-    
+
 class TriameseNetwork(nn.Module):
-    def __init__(self, siamese_params: ModelParams = ModelParams(out_shape=256), mlp_params: ModelParams = ModelParams(out_shape=256), head_params: ModelParams = ModelParams(in_shape=512)):
+    def __init__(
+        self,
+        siamese_params: ModelParams = ModelParams(out_shape=256),
+        mlp_params: ModelParams = ModelParams(out_shape=256),
+        head_params: ModelParams = ModelParams(in_shape=512),
+    ):
         super().__init__()
-        self.siamese_net = Siamese(
-            hidden_dim=siamese_params.hidden_dim, n_layers=siamese_params.n_layers, out_shape=siamese_params.out_shape, act=siamese_params.act
-        )
-        self.mlp = MLP(hidden_dim=mlp_params.hidden_dim, out_shape=mlp_params.hidden_dim, act=mlp_params.act)
+        self.siamese_net = Siamese(siamese_params)
+        self.mlp = MLP(mlp_params)
         self.head = nn.Sequential(
-            block(mlp_params.out_shape + siamese_params.out_shape, head_params.hidden_dim, act=head_params.act, drp=0.3),
+            block(
+                mlp_params.out_shape + siamese_params.out_shape,
+                head_params.hidden_dim,
+                act=head_params.act,
+                drp=0.3,
+            ),
             nn.Linear(head_params.hidden_dim, head_params.out_shape),
         )
 
