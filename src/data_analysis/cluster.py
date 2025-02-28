@@ -15,10 +15,11 @@ class Clusterplotter(Plotter):
     def update(self, csv: str) -> None:
         df = pd.read_csv(csv)
         df = df[["mut_type", "ddG_ML"]]
-        df["mutation"] = df["mut_type"].str.extract(r"([A-Z])\d*([A-Z])")
-        df["mutation"] = df["mutation"].apply(
-            lambda x: f"{x[0]}{x[1]}" if isinstance(x, tuple) else "WT"
-        )
+        df[["mut_from", "mut_to"]] = df["mut_type"].str.extract(r"([A-Z])\d*([A-Z])")
+        df["mutation"] = df["mut_from"] + df["mut_to"]
+        df.drop(columns=["mut_from", "mut_to"], inplace=True)
+        df.dropna(subset=["mutation"], inplace=True)
+        
         df_pivot = df.pivot(index="mut_type", columns=None, values="ddG_ML")
 
     def clear(self):
@@ -29,3 +30,6 @@ def cluster_plot(p: str = ".data/project_data/mega_train.csv"):
     plot = Clusterplotter()
     plot.update(p)
     plot.plot()
+
+
+
