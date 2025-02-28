@@ -207,7 +207,7 @@ def kfold(params: TrainParams) -> nn.Module:
             )
 
             print(f"model {m}")
-            train_loop(model, train_split, val_split, kfold_params[split], plotter)
+            train_loop(model, train_split, val_split, kfold_params[m], plotter)
             val_df[m, split] = sum(plotter.y["val loss"]) / len(plotter.y["val loss"])
             train_df[m, split] = sum(plotter.y["train loss"]) / len(
                 plotter.y["train loss"]
