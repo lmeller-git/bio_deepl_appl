@@ -121,7 +121,7 @@ def load_df(p: str, batch_size: int = 1024):
     )
 
     dataloader_val = DataLoader(
-        dataset_val, batch_size=batch_size, shuffle=False, num_workers=16
+        dataset_val, batch_size=batch_size, shuffle=False, num_workers=0
     )
 
     dataloader_test = DataLoader(dataset_test, batch_size=32, shuffle=False)
@@ -150,56 +150,93 @@ def cross_validate(
         all_y.append(y.detach().numpy())
 
     # concatenate and plot
-
+    # assuming data is not shuffled:
     preds = np.concatenate(preds)
 
     all_y = np.concatenate(all_y)
 
     df = pd.read_csv(p)
-    df = df["mut_type"]
-    df["mutation"] = df["mut_type"].str.extract(r"([A-Z])\d*([A-Z])")
-    df["mutation"] = df["mutation"].apply(
-        lambda x: f"{x[0]}{x[1]}" if isinstance(x, tuple) else pd.NA
-    )
-
+    df = df[["mut_type"]]
+    df[["mut_from", "mut_to"]] = df["mut_type"].str.extract(r"([A-Z])\d*([A-Z])")
+    df["mutation"] = df["mut_from"] + df["mut_to"]
+    df.drop(columns=["mut_from", "mut_to"], inplace=True)
+    df.dropna(subset=["mutation"], inplace=True)
     df.dropna(inplace=True)
     df["y"] = all_y
     df["pred"] = preds
 
-    # assuming data is not shuffled:
 
     groups = set(df["mutation"])
 
     group_data = []
 
     for group in groups:
+        if len(df.loc[df["mutation"] == group]) < 2:
+            continue
         res = d_validation.validate(
-            df["y"][df["mutation"] == group],
-            df["pred"][df["mutation" == group]],
-            performance_metric=["rmse", "pearson", "spearman"],
+            df.loc[df["mutation"] == group, "y"],
+            df.loc[df["mutation"] == group, "pred"],
+            performance_metric=["rmse", "pearson", "spearman"], visualize = False
         )
-        group_data.push((group, res))
+        group_data.append((group, res))
 
-    group_data = group_data.sort(
-        key=lambda a, b: a[1]["Pearson Correlation"] > b[1]["Pearson Correlation"]
+
+    group_data.sort(
+        key=lambda x: x[1]["Pearson Correlation"], reverse = True
     )
 
-    df = pd.concat(
+
+    
+
+    df_h = pd.concat(
         [
             pd.DataFrame(d.items(), columns=["Category", "Value"]).assign(Group=n)
             for n, d in group_data[:10]
         ]
     )
 
-    print(df)
-    plt.figure(figsize=(10, 6))
-    sns.barplot(data=df, x="Category", y="Value", hue="Group", palette="tab10")
-    plt.xlabel("Category")
-    plt.ylabel("Value")
-    plt.title("Bar Plot by Group")
-    plt.legend(title="Group")
-    plt.show()
+    
+    df_l = pd.concat(
+        [
+            pd.DataFrame(d.items(), columns=["Category", "Value"]).assign(Group=n)
+            for n, d in group_data[-10:]
+        ]
+    )
+
+    
+    group_counts = df["mutation"].value_counts().reset_index()
+    group_counts.columns = ["mutation", "Occurrences"]
+
+    selected_groups = list(df_h["Group"].unique()) + list(df_l["Group"].unique())
+    group_counts = group_counts[group_counts["mutation"].isin(selected_groups)]
+    
+    
+    fig, axes = plt.subplots(1, 3, figsize=(30, 6))
+
+    sns.barplot(data=df_h, x="Category", y="Value", hue="Group", palette="viridis", ax=axes[0])
+    axes[0].set_xlabel("Category")
+    axes[0].set_ylabel("Value")
+    axes[0].set_title("Top 10 Groups by Pearson Correlation")
+    axes[0].legend(title="Group")
+
+    sns.barplot(data=df_l, x="Category", y="Value", hue="Group", palette="magma", ax=axes[1])
+    axes[1].set_xlabel("Category")
+    axes[1].set_ylabel("Value")
+    axes[1].set_title("Bottom 10 Groups by Pearson Correlation")
+    axes[1].legend(title="Group")
+ 
+    sns.barplot(data=group_counts, x="mutation", y="Occurrences", palette="crest", ax=axes[2])
+    axes[2].set_xlabel("Mutation")
+    axes[2].set_ylabel("Occurrences")
+    axes[2].set_title("Occurrences of Shown Groups")
+    axes[2].tick_params(axis='x', rotation=45)
+
+    plt.tight_layout()
+    plt.show()    
     return
+
+    
+        
     sns.scatterplot(data=df, x="pred", y="y", hue="mutation", palette="viridis")
 
     plt.xlabel("Predicted ddG")
