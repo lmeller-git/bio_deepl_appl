@@ -137,9 +137,21 @@ def kfold(params: TrainParams) -> nn.Module:
     kf = KFold(params.cv)
     models = [
         TriameseNetwork(),
-        TriameseNetwork(ModelParams(out_shape=256), ModelParams(n_layers=2, hidden_dim=512, out_shape=512), ModelParams(hidden_dim=512)),
-        TriameseNetwork(ModelParams(n_layers=2, hidden_dim=512, out_shape=512), ModelParams(out_shape=256), ModelParams(hidden_dim=512)),
-        TriameseNetwork(ModelParams(n_layers=2, out_shape=256), ModelParams(n_layers=2, out_shape=256), ModelParams(hidden_dim=512))
+        TriameseNetwork(
+            ModelParams(out_shape=256),
+            ModelParams(n_layers=2, hidden_dim=512, out_shape=512),
+            ModelParams(hidden_dim=512),
+        ),
+        TriameseNetwork(
+            ModelParams(n_layers=2, hidden_dim=512, out_shape=512),
+            ModelParams(out_shape=256),
+            ModelParams(hidden_dim=512),
+        ),
+        TriameseNetwork(
+            ModelParams(n_layers=2, out_shape=256),
+            ModelParams(n_layers=2, out_shape=256),
+            ModelParams(hidden_dim=512),
+        ),
     ]
     val_df = np.zeros((len(models), params.cv))
     train_df = np.zeros((len(models), params.cv))
@@ -210,22 +222,25 @@ def validate(
     model: nn.Module, criterion: nn.Module, df: DataLoader, plotter: Plotter
 ) -> torch.Tensor:
     losses = []
-    scc = []
-    pcc = []
+    preds = []
+    all_y = []
     for (embs, mut_embs), lbl in df:
         (embs, mut_embs, lbl) = (embs.to(DEVICE), mut_embs.to(DEVICE), lbl.to(DEVICE))
         yhat = model(embs, mut_embs).squeeze()
         loss = criterion(yhat, lbl)
         losses.append(loss)
-        r = data_analysis.validate(lbl, yhat, ["pearson", "spearman"], False)
-        scc.append(r["Spearman Correlation"])
-        pcc.append(r["Pearson Correlation"])
+        preds.append(yhat.cpu().detach().numpy())
+        all_y.append(lbl.cpu().detach().numpy())
 
+    all_y = np.concatenate(all_y)
+    preds = np.concatenate(preds)
     loss = sum(losses) / len(losses)
-    scc = sum(scc) / len(scc)
-    pcc = sum(pcc) / len(pcc)
+    r = data_analysis.validate(lbl, yhat, ["pearson", "spearman"], False)
+    scc = r["Spearman Correlation"]
+    pcc = r["Pearson Correlation"]
+
     plotter.update("val loss", loss.detach().cpu().numpy())
-    print(f"\tLoss: {loss:.3f} | scc: {scc:.3f} | pcc: {pcc:.3f}")
+    print(f"Loss: {loss:.3f} | scc: {scc:.3f} | pcc: {pcc:.3f}")
     return loss
 
 
@@ -246,4 +261,5 @@ def step(
         optim.step()
         losses.append(loss.detach())
     losses = sum(losses) / len(losses)
+    print(f"\tTrain Loss: {losses:.3f}", end="\t")
     plotter.update("train loss", losses.cpu().numpy())
