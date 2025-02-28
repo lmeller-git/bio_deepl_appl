@@ -136,20 +136,29 @@ def kfold(params: TrainParams) -> nn.Module:
 
     kf = KFold(params.cv)
     models = [
-        TriameseNetwork(),
         TriameseNetwork(
-            ModelParams(out_shape=256),
+            ModelParams(out_shape=256, n_layers=2, hidden_dim=512),
+            ModelParams(n_layers=2, hidden_dim=512, out_shape=512),
+            ModelParams(hidden_dim=1024),
+        ),
+        TriameseNetwork(
+            ModelParams(out_shape=256, n_layers=3, hidden_sim=512),
             ModelParams(n_layers=2, hidden_dim=512, out_shape=512),
             ModelParams(hidden_dim=512),
         ),
         TriameseNetwork(
             ModelParams(n_layers=2, hidden_dim=512, out_shape=512),
-            ModelParams(out_shape=256),
+            ModelParams(out_shape=256, n_layers=3, hidden_dim=512),
             ModelParams(hidden_dim=512),
         ),
         TriameseNetwork(
             ModelParams(n_layers=2, out_shape=256),
             ModelParams(n_layers=2, out_shape=256),
+            ModelParams(hidden_dim=512),
+        ),
+        TriameseNetwork(
+            ModelParams(n_layers=2, out_shape=256, act=nn.ReLU),
+            ModelParams(n_layers=2, out_shape=256, act=nn.ReLU),
             ModelParams(hidden_dim=512),
         ),
     ]
@@ -212,6 +221,7 @@ def kfold(params: TrainParams) -> nn.Module:
     (train_df, train_std) = (np.mean(train_df, axis=1), np.std(train_df, axis=1))
     (val_df, val_std) = (np.mean(val_df, axis=1), np.std(val_df, axis=1))
     best_model = np.argmin(train_df)
+    print(f"Val df: {val_df}")
     print(
         f"Best model: model {best_model}: {models[best_model]}\ntrain loss: {train_df[best_model]} | train std: {train_std[best_model]} | val loss: {val_df[best_model]} | val std: {val_std[best_model]}\nParams: {kfold_params[best_model]}"
     )
