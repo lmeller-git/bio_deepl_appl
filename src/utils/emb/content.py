@@ -14,7 +14,7 @@ import sklearn.metrics as skmetrics
 import matplotlib.pyplot as plt
 
 import seaborn as sns
-
+from torch import nn
 
 # Pytorch
 
@@ -128,6 +128,9 @@ def load_df(p: str, batch_size: int = 1024):
 
     return (dataloader_train, dataloader_val, dataloader_test)
 
+
+def validate(model: nn.Module, val: DataLoader):
+    model.cpu()
     # your code
     preds = []
 
@@ -135,12 +138,10 @@ def load_df(p: str, batch_size: int = 1024):
 
     # save all predictions
 
-    for batch in dataloader_val:
+    for (wt, mut), y in val:
         # adjust this to work with your model
 
-        x, y = batch
-
-        y_hat = model(x)
+        y_hat = model(wt, mut)
 
         preds.append(y_hat.squeeze().detach().numpy())
 

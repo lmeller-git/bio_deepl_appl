@@ -26,6 +26,8 @@ from src.utils import (
     save_params,
 )
 
+import src.utils as utils
+
 global DEVICE
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_dtype(torch.float32)
@@ -92,6 +94,7 @@ def train(model: nn.Module | None, params: TrainParams):
     data_analysis.baseline(
         [model.cpu()], ["rmse", "spearman", "pearson"], val_df, p=params.train_df
     )
+    utils.validate(model, val_df)
 
 
 def train_loop(
