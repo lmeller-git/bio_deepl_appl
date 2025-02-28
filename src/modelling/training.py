@@ -97,6 +97,7 @@ def train(model: nn.Module | None, params: TrainParams):
     )
     utils.validate(model, val_df)
     #train_df, val_df, test_df = load_df(params.train_df, params.batch_size)
+    #utils.validate(model, val_df)
 
     utils.cross_validate(model, val_df, params.train_df + "project_data/mega_val.csv")
 

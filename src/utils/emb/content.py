@@ -8,7 +8,7 @@ import scipy
 
 import sklearn.metrics as skmetrics
 
-
+import time
 # plotting
 
 import matplotlib.pyplot as plt
@@ -121,7 +121,7 @@ def load_df(p: str, batch_size: int = 1024):
     )
 
     dataloader_val = DataLoader(
-        dataset_val, batch_size=batch_size, shuffle=False, num_workers=16
+        dataset_val, batch_size=batch_size, shuffle=False, num_workers=0
     )
 
     dataloader_test = DataLoader(dataset_test, batch_size=32, shuffle=False)
@@ -140,8 +140,9 @@ def cross_validate(
 
     # DO NOT REMOVE THIS PRINT STATEMENT (data race or sth like that)
     print("")
-    print("")
-
+    #time.sleep(1)
+    #print("")
+    
     # save all predictions
     for (wt, mut), y in val:
         # adjust this to work with your model
