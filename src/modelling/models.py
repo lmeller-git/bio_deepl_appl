@@ -9,7 +9,7 @@ class ModelParams:
     out_shape: int = 1
     hidden_dim: int = 256
     n_layers: int = 1
-    act: nn.Module = nn.ReLU
+    act: nn.Module = nn.LeakyReLU
 
 
 def block(

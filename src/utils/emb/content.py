@@ -75,7 +75,7 @@ class ProtEmbeddingDataset(Dataset):
         tensor_path = os.path.join(self.tensor_folder, self.ids[idx] + ".pt")
 
         tensor = torch.load(tensor_path)["mean_representations"][6]
-
+        
         # wildtype embedding, uncomment if you want to use this, too
         try:
             tensor_path_wt = os.path.join(

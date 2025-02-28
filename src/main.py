@@ -14,9 +14,9 @@ from torch import nn
 
 
 def main(args):
-    print(args)
+    # print(args)
     # model = Siamese(hidden_dim=512, n_layers=2) #LeakyMLP(768)
-    model = TriameseNetwork(ModelParams(act=nn.LeakyReLU))
+    model = TriameseNetwork(ModelParams(act=nn.LeakyReLU, out_shape=256), ModelParams(act=nn.LeakyReLU, out_shape=256), ModelParams(act=nn.LeakyReLU, in_shape=512))
     if args.mode == "cv":
         params = TrainParams(
             args.data,

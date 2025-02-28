@@ -136,12 +136,10 @@ def kfold(params: TrainParams) -> nn.Module:
 
     kf = KFold(params.cv)
     models = [
-        BasicMLP(),
-        MLP(),
-        MLP(ModelParams(act=nn.LeakyReLU)),
-        Siamese(),
-        ExtendedSiamese(),
         TriameseNetwork(),
+        TriameseNetwork(ModelParams(out_shape=256), ModelParams(n_layers=2, hidden_dim=512, out_shape=512), ModelParams(hidden_dim=512)),
+        TriameseNetwork(ModelParams(n_layers=2, hidden_dim=512, out_shape=512), ModelParams(out_shape=256), ModelParams(hidden_dim=512)),
+        TriameseNetwork(ModelParams(n_layers=2, out_shape=256), ModelParams(n_layers=2, out_shape=256), ModelParams(hidden_dim=512))
     ]
     val_df = np.zeros((len(models), params.cv))
     train_df = np.zeros((len(models), params.cv))
