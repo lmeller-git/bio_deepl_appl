@@ -139,18 +139,18 @@ def kfold(params: TrainParams) -> nn.Module:
     kf = KFold(params.cv)
     models = [
         TriameseNetwork(
-            ModelParams(out_shape=256, n_layers=2, hidden_dim=512),
-            ModelParams(n_layers=2, hidden_dim=512, out_shape=512),
-            ModelParams(hidden_dim=1024),
+            ModelParams(out_shape=256, n_layers=1, hidden_dim=256),
+            ModelParams(n_layers=1, hidden_dim=256, out_shape=256),
+            ModelParams(hidden_dim=512),
         ),
         TriameseNetwork(
-            ModelParams(out_shape=256, n_layers=3, hidden_sim=512),
+            ModelParams(out_shape=256, n_layers=1, hidden_dim=512),
             ModelParams(n_layers=2, hidden_dim=512, out_shape=512),
             ModelParams(hidden_dim=512),
         ),
         TriameseNetwork(
             ModelParams(n_layers=2, hidden_dim=512, out_shape=512),
-            ModelParams(out_shape=256, n_layers=3, hidden_dim=512),
+            ModelParams(out_shape=256, n_layers=1, hidden_dim=512),
             ModelParams(hidden_dim=512),
         ),
         TriameseNetwork(
