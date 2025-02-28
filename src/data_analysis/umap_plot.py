@@ -10,7 +10,7 @@ class UMAP_Plotter(Plotter):
     def __init__(self):
         self.df = None
         
-    def plot(self, labels: list[int]):
+    def plot(self, labels: list = []):
         plt.figure(figsize=(10, 7))
         
         if labels is not None:
@@ -48,4 +48,8 @@ class UMAP_Plotter(Plotter):
     def clear(self):
         self.df = None
 
-  
+
+def umap_plot(wt_embeddings, mut_embeddings, lbls: list = []):
+    plot = UMAP_Plotter()
+    plot.update(wt_embeddings, mut_embeddings)
+    plot.plot(lbls)
