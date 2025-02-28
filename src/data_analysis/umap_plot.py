@@ -13,8 +13,8 @@ class UMAP_Plotter(Plotter):
     def plot(self, labels: list = []):
         plt.figure(figsize=(10, 7))
         
-        if labels is not None:
-            df["Label"] = labels
+        if labels:
+            self.df["Label"] = labels
 
             scatter = sns.scatterplot(
                 data=df,
@@ -26,7 +26,7 @@ class UMAP_Plotter(Plotter):
             )
             plt.legend(title="Labels", bbox_to_anchor=(1.05, 1), loc='upper left')
         else:
-            plt.scatter(df["UMAP1"], df["UMAP2"], color="blue", alpha=0.7, edgecolors="black")
+            plt.scatter(df["UMAP1"], df["UMAP2"], color="blue", alpha=0.7)
 
         plt.title("UMAP of Δ Embeddings (Mutant - Wildtype)")
         plt.xlabel("UMAP Dimension 1")
@@ -39,7 +39,7 @@ class UMAP_Plotter(Plotter):
         reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric="euclidean")
         umap_results = reducer.fit_transform(delta_embeddings)
         
-        df = pd.DataFrame({
+        self.df = pd.DataFrame({
             "UMAP1": umap_results[:, 0],
             "UMAP2": umap_results[:, 1]
         })
