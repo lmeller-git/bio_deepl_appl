@@ -220,8 +220,9 @@ def kfold(params: TrainParams) -> nn.Module:
     kfold_plotter.plot()
     (train_df, train_std) = (np.mean(train_df, axis=1), np.std(train_df, axis=1))
     (val_df, val_std) = (np.mean(val_df, axis=1), np.std(val_df, axis=1))
-    best_model = np.argmin(train_df)
+    best_model = np.argmin(val_df)
     print(f"Val df: {val_df}")
+    print(f"Train df: {train_df}")
     print(
         f"Best model: model {best_model}: {models[best_model]}\ntrain loss: {train_df[best_model]} | train std: {train_std[best_model]} | val loss: {val_df[best_model]} | val std: {val_std[best_model]}\nParams: {kfold_params[best_model]}"
     )
