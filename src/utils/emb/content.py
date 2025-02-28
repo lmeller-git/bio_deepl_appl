@@ -20,7 +20,7 @@ from torch import nn
 
 import torch
 
-
+import src.data_analysis.validation as d_validation
 from torch.utils.data import DataLoader, Dataset
 
 # the dataloaders load the tensors from memory one by one, could potentially become a bottleneck
@@ -166,6 +166,40 @@ def cross_validate(
     df["y"] = all_y
     df["pred"] = preds
 
+    # assuming data is not shuffled:
+
+    groups = set(df["mutation"])
+
+    group_data = []
+
+    for group in groups:
+        res = d_validation.validate(
+            df["y"][df["mutation"] == group],
+            df["pred"][df["mutation" == group]],
+            performance_metric=["rmse", "pearson", "spearman"],
+        )
+        group_data.push((group, res))
+
+    group_data = group_data.sort(
+        key=lambda a, b: a[1]["Pearson Correlation"] > b[1]["Pearson Correlation"]
+    )
+
+    df = pd.concat(
+        [
+            pd.DataFrame(d.items(), columns=["Category", "Value"]).assign(Group=n)
+            for n, d in group_data[:10]
+        ]
+    )
+
+    print(df)
+    plt.figure(figsize=(10, 6))
+    sns.barplot(data=df, x="Category", y="Value", hue="Group", palette="tab10")
+    plt.xlabel("Category")
+    plt.ylabel("Value")
+    plt.title("Bar Plot by Group")
+    plt.legend(title="Group")
+    plt.show()
+    return
     sns.scatterplot(data=df, x="pred", y="y", hue="mutation", palette="viridis")
 
     plt.xlabel("Predicted ddG")

@@ -9,7 +9,7 @@ class Clusterplotter(Plotter):
         self.df_pivot = None
 
     def plot(self) -> None:
-        sns.clustermap(df_pivot, figsize=(10, 5), cmap='viridis', annot=True)        
+        sns.clustermap(self.df_pivot, figsize=(10, 5), cmap="viridis", annot=True)
         plt.show()
 
     def update(self, csv: str) -> None:
@@ -19,7 +19,7 @@ class Clusterplotter(Plotter):
         df["mutation"] = df["mut_from"] + df["mut_to"]
         df.drop(columns=["mut_from", "mut_to"], inplace=True)
         df.dropna(subset=["mutation"], inplace=True)
-        df_pivot = df.pivot(index='mutation', columns='mutation', values='ddG_ML')
+        df_pivot = df.pivot(index="mutation", columns="mutation", values="ddG_ML")
 
     def clear(self):
         self.df_pivot = None
@@ -29,6 +29,3 @@ def cluster_plot(p: str = ".data/project_data/mega_train.csv"):
     plot = Clusterplotter()
     plot.update(p)
     plot.plot()
-
-
-
