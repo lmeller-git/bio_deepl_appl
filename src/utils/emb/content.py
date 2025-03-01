@@ -9,6 +9,7 @@ import scipy
 import sklearn.metrics as skmetrics
 
 import time
+
 # plotting
 
 import matplotlib.pyplot as plt
@@ -140,9 +141,9 @@ def cross_validate(
 
     # DO NOT REMOVE THIS PRINT STATEMENT (data race or sth like that)
     print("")
-    #time.sleep(1)
-    #print("")
-    
+    # time.sleep(1)
+    # print("")
+
     # save all predictions
     for (wt, mut), y in val:
         # adjust this to work with your model
@@ -170,7 +171,6 @@ def cross_validate(
     df["y"] = all_y
     df["pred"] = preds
 
-
     groups = set(df["mutation"])
 
     group_data = []
@@ -181,17 +181,14 @@ def cross_validate(
         res = d_validation.validate(
             df.loc[df["mutation"] == group, "y"],
             df.loc[df["mutation"] == group, "pred"],
-            performance_metric=["rmse", "pearson", "spearman"], visualize = False
+            performance_metric=["rmse", "pearson", "spearman"],
+            visualize=False,
         )
         group_data.append((group, res))
 
+    print(len(group_data))
 
-    group_data.sort(
-        key=lambda x: x[1]["Pearson Correlation"], reverse = True
-    )
-
-
-    
+    group_data.sort(key=lambda x: x[1]["Pearson Correlation"], reverse=True)
 
     df_h = pd.concat(
         [
@@ -200,7 +197,6 @@ def cross_validate(
         ]
     )
 
-    
     df_l = pd.concat(
         [
             pd.DataFrame(d.items(), columns=["Category", "Value"]).assign(Group=n)
@@ -208,40 +204,70 @@ def cross_validate(
         ]
     )
 
-    
     group_counts = df["mutation"].value_counts().reset_index()
     group_counts.columns = ["mutation", "Occurrences"]
 
     selected_groups = list(df_h["Group"].unique()) + list(df_l["Group"].unique())
-    group_counts = group_counts[group_counts["mutation"].isin(selected_groups)]
-    
-    
+    group_counts_smol = group_counts[group_counts["mutation"].isin(selected_groups)]
+
     fig, axes = plt.subplots(1, 3, figsize=(30, 6))
 
-    sns.barplot(data=df_h, x="Category", y="Value", hue="Group", palette="viridis", ax=axes[0])
+    sns.barplot(
+        data=df_h, x="Category", y="Value", hue="Group", palette="viridis", ax=axes[0]
+    )
     axes[0].set_xlabel("Category")
     axes[0].set_ylabel("Value")
     axes[0].set_title("Top 10 Groups by Pearson Correlation")
     axes[0].legend(title="Group")
 
-    sns.barplot(data=df_l, x="Category", y="Value", hue="Group", palette="magma", ax=axes[1])
+    sns.barplot(
+        data=df_l, x="Category", y="Value", hue="Group", palette="magma", ax=axes[1]
+    )
     axes[1].set_xlabel("Category")
     axes[1].set_ylabel("Value")
     axes[1].set_title("Bottom 10 Groups by Pearson Correlation")
     axes[1].legend(title="Group")
- 
-    sns.barplot(data=group_counts, x="mutation", y="Occurrences", palette="crest", ax=axes[2])
+
+    sns.barplot(
+        data=group_counts_smol,
+        x="mutation",
+        y="Occurrences",
+        palette="crest",
+        ax=axes[2],
+    )
     axes[2].set_xlabel("Mutation")
     axes[2].set_ylabel("Occurrences")
     axes[2].set_title("Occurrences of Shown Groups")
-    axes[2].tick_params(axis='x', rotation=45)
+    axes[2].tick_params(axis="x", rotation=45)
 
     plt.tight_layout()
-    plt.show()    
+    plt.show()
+
+    pearson_dict = dict(group_data[:10] + group_data[-10:])
+
+    df_heatmap = pd.DataFrame(
+        {
+            "Mutation": list(pearson_dict.keys()),
+            "Pearson Correlation": [
+                v["Pearson Correlation"] for k, v in pearson_dict.items()
+            ],
+        }
+    )
+    df_heatmap = pd.merge(
+        df_heatmap, group_counts, left_on="Mutation", right_on="mutation", how="left"
+    ).drop(columns=["mutation"])
+    print(df_heatmap)
+
+    df_heatmap["Occurrences"] = np.log10(df_heatmap["Occurrences"])
+
+    # print(df_heatmap)
+
+    df_heatmap.set_index("Mutation", inplace=True)
+    sns.clustermap(df_heatmap, cmap="viridis", col_cluster=False)
+    plt.show()
+
     return
 
-    
-        
     sns.scatterplot(data=df, x="pred", y="y", hue="mutation", palette="viridis")
 
     plt.xlabel("Predicted ddG")
