@@ -9,6 +9,9 @@ repository for the course Applications of Deep Learning in Biology
 ## Usage
 
 load correctly organized data into some directory  
-cd into the repo
+cd into the repo  
+add src to you PYTHONPATH  
 
-```python src/main.py --data <path-to-data-dir>```
+```$ export PYTHONPATH="$PYTHONPATH:."```
+
+```$ python src/main.py --data <path-to-data-dir>```
