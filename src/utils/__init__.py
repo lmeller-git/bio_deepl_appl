@@ -13,7 +13,7 @@ from src.utils.utils import (
     save_params,
 )
 import src.utils.blosum.content as blosum
-
+from src.utils.emb_gen.content import get_emb
 
 __all__ = [
     "Plotter",
@@ -25,4 +25,5 @@ __all__ = [
     "save_params",
     "validate",
     "cross_validate",
+    "get_emb",
 ]

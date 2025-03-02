@@ -7,7 +7,8 @@ from src import (
     dist_plot,
     TriameseNetwork,
     cluster_plot,
-    ModelParams
+    ModelParams,
+    make_predictions,
 )
 from argparse import ArgumentParser
 from torch import nn
@@ -16,7 +17,11 @@ from torch import nn
 def main(args):
     # print(args)
     # model = Siamese(hidden_dim=512, n_layers=2) #LeakyMLP(768)
-    model = TriameseNetwork(ModelParams(act=nn.LeakyReLU, out_shape=256), ModelParams(act=nn.LeakyReLU, out_shape=256), ModelParams(act=nn.LeakyReLU, in_shape=512))
+    model = TriameseNetwork(
+        ModelParams(act=nn.LeakyReLU, out_shape=256),
+        ModelParams(act=nn.LeakyReLU, out_shape=256),
+        ModelParams(act=nn.LeakyReLU, in_shape=512),
+    )
     if args.mode == "cv":
         params = TrainParams(
             args.data,
@@ -36,6 +41,9 @@ def main(args):
         cluster_plot(args.data + "project_data/mega_val.csv")
         cluster_plot(args.data + "project_data/mega_test.csv")
         return
+    elif args.mode == "predict":
+        _ = make_predictions(args.wt, args.mutations)
+        return
     else:
         params = TrainParams(args.data, args.epochs, args.lr, args.batchsize)
     train(model, params)
@@ -49,6 +57,21 @@ if __name__ == "__main__":
     subparsers = parser.add_subparsers(dest="mode")
 
     anal_parser = subparsers.add_parser("anal", help="data analysis")
+
+    inference_parser = subparsers.add_parser(
+        "predict", help="predict ddG values for all provided mutations"
+    )
+
+    inference_parser.add_argument(
+        "wt", type=str, help="fasta file containing wt seq, or a nt seq"
+    )
+
+    inference_parser.add_argument(
+        "mutations",
+        type=str,
+        nargs="+",
+        help="Mutations to check. Can be any of a fasta file, a list of sequences, a list of mutations in format <wt nt><position><mut nt>",
+    )
 
     cv_parser = subparsers.add_parser("cv", help="Enable cross-validation")
     cv_parser.add_argument(
