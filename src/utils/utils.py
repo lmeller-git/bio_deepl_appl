@@ -1,20 +1,23 @@
 import torch
 from abc import ABC, abstractmethod
+import matplotlib.pyplot as plt
+
+# from src.config import VERBOSITY, OUT
 
 
 class TrainParams:
     pass
 
 
-def save_model(model: torch.nn.Module, path: str = "./out/best_model.pth") -> None:
+def save_model(model: torch.nn.Module, path: str = OUT + "best_model.pth") -> None:
     torch.save(model.state_dict(), path)
 
 
-def load_model(path: str = "./out/best_model.pth") -> torch.nn.Module:
+def load_model(path: str = OUT + "best_model.pth") -> torch.nn.Module:
     torch.load(path)
 
 
-def save_params(params: TrainParams, path: str = "./out/params.csv") -> None:
+def save_params(params: TrainParams, path: str = OUT + "params.csv") -> None:
     with open(path, "w") as f:
         f.write(f"{params.epochs},{params.batch_size},{params.lr}")
     pass
@@ -30,8 +33,11 @@ def weight_reset(m):
 
 
 class Plotter(ABC):
-    def __init__(self):
+    out: str
+
+    def __init__(self, out: str = OUT, *args, **kwargs):
         super().__init__()
+        self.out = out
         pass
 
     @abstractmethod
@@ -45,6 +51,25 @@ class Plotter(ABC):
     @abstractmethod
     def clear(self) -> None:
         pass
+
+    def should_save(self, p: str = "") -> None:
+
+        original_show = plt.show
+
+        def custom_show(*args, **kwargs):
+            try:
+                plt.savefig(self.out + str(self) + "_" + p + ".png")
+            finally:
+                plt.show = original_show
+                if VERBOSITY >= 2:
+                    plt.show(*args, **kwargs)
+                else:
+                    plt.close()
+
+        plt.show = custom_show
+
+    def __repr__(self):
+        return "plot"
 
 
 class EmptyPlotter(Plotter):

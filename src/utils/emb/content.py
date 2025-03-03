@@ -23,6 +23,7 @@ import torch
 
 import src.data_analysis.validation as d_validation
 from torch.utils.data import DataLoader, Dataset
+from src.utils.utils import Plotter
 
 # the dataloaders load the tensors from memory one by one, could potentially become a bottleneck
 
@@ -130,6 +131,77 @@ def load_df(p: str, batch_size: int = 1024):
     return (dataloader_train, dataloader_val, dataloader_test)
 
 
+class PlotPredQualityMap(Plotter):
+
+    def update(self, df: pd.DataFrame):
+        self.df = df
+
+    def plot(self):
+        sns.clustermap(self.df, cmap="viridis", col_cluster=False)
+        plt.show()
+
+    def clear(self):
+        self.df = None
+
+
+class PlotPredQuality(Plotter):
+
+    def update(self, low: pd.DataFrame, hi: pd.DataFrame, counts: pd.DataFrame):
+        self.low = low
+        self.hi = hi
+        self.counts = counts
+
+    def plot(self):
+        fig, axes = plt.subplots(1, 3, figsize=(30, 6))
+
+        sns.barplot(
+            data=self.hi,
+            x="Category",
+            y="Value",
+            hue="Group",
+            palette="viridis",
+            ax=axes[0],
+        )
+        axes[0].set_xlabel("Category")
+        axes[0].set_ylabel("Value")
+        axes[0].set_title("Top 10 Groups by Pearson Correlation")
+        axes[0].legend(title="Group")
+
+        sns.barplot(
+            data=self.low,
+            x="Category",
+            y="Value",
+            hue="Group",
+            palette="magma",
+            ax=axes[1],
+        )
+        axes[1].set_xlabel("Category")
+        axes[1].set_ylabel("Value")
+        axes[1].set_title("Bottom 10 Groups by Pearson Correlation")
+        axes[1].legend(title="Group")
+
+        sns.barplot(
+            data=self.counts,
+            x="mutation",
+            y="Occurrences",
+            hue="mutation",
+            palette="crest",
+            ax=axes[2],
+        )
+        axes[2].set_xlabel("Mutation")
+        axes[2].set_ylabel("Occurrences")
+        axes[2].set_title("Occurrences of Shown Groups")
+        axes[2].tick_params(axis="x", rotation=45)
+
+        plt.tight_layout()
+        plt.show()
+
+    def clear(self):
+        self.low = None
+        self.hi = None
+        self.counts = None
+
+
 def cross_validate(
     model: nn.Module, val: DataLoader, p: str = "./data/project_data/mega_val.csv"
 ):
@@ -139,7 +211,7 @@ def cross_validate(
 
     all_y = []
 
-    # DO NOT REMOVE THIS PRINT STATEMENT (data race or sth like that)
+    # DO NOT REMOVE THIS PRINT STATEMENT (data race/deadlock or sth like that if n_workers > 0 in dataloader)
     print("")
     # time.sleep(1)
     # print("")
@@ -160,6 +232,8 @@ def cross_validate(
     preds = np.concatenate(preds)
 
     all_y = np.concatenate(all_y)
+
+    plotter = PlotPredQuality()
 
     df = pd.read_csv(p)
     df = df[["mut_type"]]
@@ -209,39 +283,9 @@ def cross_validate(
 
     selected_groups = list(df_h["Group"].unique()) + list(df_l["Group"].unique())
     group_counts_smol = group_counts[group_counts["mutation"].isin(selected_groups)]
-
-    fig, axes = plt.subplots(1, 3, figsize=(30, 6))
-
-    sns.barplot(
-        data=df_h, x="Category", y="Value", hue="Group", palette="viridis", ax=axes[0]
-    )
-    axes[0].set_xlabel("Category")
-    axes[0].set_ylabel("Value")
-    axes[0].set_title("Top 10 Groups by Pearson Correlation")
-    axes[0].legend(title="Group")
-
-    sns.barplot(
-        data=df_l, x="Category", y="Value", hue="Group", palette="magma", ax=axes[1]
-    )
-    axes[1].set_xlabel("Category")
-    axes[1].set_ylabel("Value")
-    axes[1].set_title("Bottom 10 Groups by Pearson Correlation")
-    axes[1].legend(title="Group")
-
-    sns.barplot(
-        data=group_counts_smol,
-        x="mutation",
-        y="Occurrences",
-        palette="crest",
-        ax=axes[2],
-    )
-    axes[2].set_xlabel("Mutation")
-    axes[2].set_ylabel("Occurrences")
-    axes[2].set_title("Occurrences of Shown Groups")
-    axes[2].tick_params(axis="x", rotation=45)
-
-    plt.tight_layout()
-    plt.show()
+    plotter.update(df_l, df_h, group_counts_smol)
+    plotter.should_save("hi_lo_qual")
+    plotter.plot()
 
     pearson_dict = dict(group_data[:10] + group_data[-10:])
 
@@ -263,8 +307,11 @@ def cross_validate(
     # print(df_heatmap)
 
     df_heatmap.set_index("Mutation", inplace=True)
-    sns.clustermap(df_heatmap, cmap="viridis", col_cluster=False)
-    plt.show()
+
+    map_plotter = PlotPredQualityMap()
+    map_plotter.update(df_heatmap)
+    map_plotter.should_save("qual_map")
+    map_plotter.plot()
 
     return
 
@@ -306,7 +353,11 @@ def validate(model: nn.Module, val: DataLoader):
     plt.xlabel("Predicted ddG")
 
     plt.ylabel("Measured ddG")
-    plt.show()
+    plt.savefig(OUT + "pred_vs_lbl.png")
+    if VERBOSITY >= 2:
+        plt.show()
+    else:
+        plt.close()
 
     # get RMSE, Pearson and Spearman correlation
 

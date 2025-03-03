@@ -8,8 +8,8 @@ class LossPlotter(Plotter):
     y: dict[list[float]]
     metric: str
 
-    def __init__(self, metric: str = "rmse"):
-        super().__init__()
+    def __init__(self, metric: str = "rmse", *args, **kwargs):
+        super().__init__(*args, **kwargs)
         (self.x, self.y) = (defaultdict(list), defaultdict(list))
         self.metric = metric
 
@@ -28,3 +28,6 @@ class LossPlotter(Plotter):
 
     def clear(self) -> None:
         self = LossPlotter(self.metric)
+
+    def __repr__(self):
+        return self.metric + "_plot"

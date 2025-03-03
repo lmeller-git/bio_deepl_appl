@@ -23,7 +23,7 @@ def validate(
     y_true: np.ndarray,
     y_pred: np.ndarray,
     performance_metric: list[str] = [],
-    visualize: bool = True,
+    visualize: bool = VERBOSITY >= 2,
 ):
     # return {"Pearson Correlation": 0, "Spearman Correlation": 0, "RMSE": 0}
     # TODO
@@ -66,4 +66,5 @@ def plot_predictions(y_true, y_pred, title="Predictions vs. True Values"):
     plt.title(f"{title} (Residual Distribution)")
 
     plt.tight_layout()
+    plt.savefig(OUT + "prediction_plot.png")
     plt.show()

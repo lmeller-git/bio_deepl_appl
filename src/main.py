@@ -1,20 +1,28 @@
-from src import (
-    train,
-    TrainParams,
-    BasicMLP,
-    MLP,
-    Siamese,
-    dist_plot,
-    TriameseNetwork,
-    cluster_plot,
-    ModelParams,
-    make_predictions,
-)
 from argparse import ArgumentParser
 from torch import nn
+import builtins
 
 
 def main(args):
+    builtins.VERBOSITY = args.verbosity
+    builtins.OUT = args.out
+
+    if args.verbosity == 0:
+        builtins.print = lambda *args, **kwargs: None
+
+    from src import (
+        train,
+        TrainParams,
+        BasicMLP,
+        MLP,
+        Siamese,
+        dist_plot,
+        TriameseNetwork,
+        cluster_plot,
+        ModelParams,
+        make_predictions,
+    )
+
     # print(args)
     # model = Siamese(hidden_dim=512, n_layers=2) #LeakyMLP(768)
     model = TriameseNetwork(
@@ -25,6 +33,7 @@ def main(args):
     if args.mode == "cv":
         params = TrainParams(
             args.data,
+            args.out,
             args.epochs,
             args.lr,
             args.batchsize,
@@ -45,7 +54,7 @@ def main(args):
         _ = make_predictions(args.wt, args.mutations)
         return
     else:
-        params = TrainParams(args.data, args.epochs, args.lr, args.batchsize)
+        params = TrainParams(args.data, args.out, args.epochs, args.lr, args.batchsize)
     train(model, params)
 
 
@@ -54,6 +63,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--data", "-d", type=str, default="./data/", help="path to project_data dir"
     )
+
+    parser.add_argument(
+        "--verbosity", "-v", type=int, default=2, help="verbosity of the program"
+    )
+
     subparsers = parser.add_subparsers(dest="mode")
 
     anal_parser = subparsers.add_parser("anal", help="data analysis")

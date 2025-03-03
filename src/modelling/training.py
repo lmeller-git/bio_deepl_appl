@@ -39,6 +39,7 @@ print("Device set to", DEVICE)
 
 class TrainParams:
     epochs: int
+    out: str
     train_df: str
     lr: float
     batch_size: int
@@ -49,6 +50,7 @@ class TrainParams:
     def __init__(
         self,
         train_df: str = "./data/",
+        out: str = "./out/",
         epochs: int = 10,
         lr: float = 1e-4,
         batch_size: int = 1024,
@@ -62,7 +64,7 @@ class TrainParams:
         self.batch_size = batch_size
         self.cv = cv
         self.kfold_args = kwargs
-        # self.cv_def = cv_definition
+        self.out = out
 
     def __repr__(self):
         return f"Params:\nepochs={self.epochs} | lr={self.lr} | batch_size={self.batch_size}"
@@ -88,12 +90,13 @@ def train(model: nn.Module | None, params: TrainParams):
     plotter = LossPlotter()
     print("training model")
     train_loop(model, train_df, val_df, params, plotter)
+    plotter.should_save("test")
     plotter.plot()
-    save_model(model)
+    save_model(model, params.out + "best_model.pth")
     save_params(params)
     print("model trained and saved")
     data_analysis.baseline(
-    [model.cpu()], ["rmse", "spearman", "pearson"], val_df, p=params.train_df
+        [model.cpu()], ["rmse", "spearman", "pearson"], val_df, p=params.train_df
     )
     utils.validate(model, val_df)
 
@@ -115,7 +118,7 @@ def train_loop(
     scheduler_plat = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, patience=2)
     scheduler2 = torch.optim.lr_scheduler.ExponentialLR(optim, 0.9)
     model.to(DEVICE)
-    for epoch in tqdm(range(params.epochs)):
+    for epoch in tqdm(range(params.epochs), disable=VERBOSITY < 2, desc="train loop"):
         # print(f"Epoch {epoch}, Batches: {len(train)}")
         model.train()
         step(model, optim, criterion, train, plotter)
@@ -171,9 +174,9 @@ def kfold(params: TrainParams) -> nn.Module:
     val_df = np.zeros((len(models), params.cv))
     train_df = np.zeros((len(models), params.cv))
     plotter = LossPlotter()
-    kfold_plotter = LossPlotter("rmse kfold")
+    kfold_plotter = LossPlotter("rmse kfold", out=params.out)
     kfold_params = []
-    for i in tqdm(range(len(models))):
+    for i in tqdm(range(len(models)), disable=VERBOSITY < 2, desc="cv"):
         base_lr = params.lr
         base_epochs = params.epochs
         base_batch_size = params.batch_size
@@ -223,6 +226,7 @@ def kfold(params: TrainParams) -> nn.Module:
             kfold_plotter.update("train model " + str(m), train_df[m, split], split)
             weight_reset(model)
 
+    kfold_plotter.should_save("cv")
     kfold_plotter.plot()
     (train_df, train_std) = (np.mean(train_df, axis=1), np.std(train_df, axis=1))
     (val_df, val_std) = (np.mean(val_df, axis=1), np.std(val_df, axis=1))

@@ -29,4 +29,5 @@ def dist_plot(p: str = "./data/project_data/mega_train.csv"):
     for lbl in lbls:
         plot.update(lbl)
 
+    plot.should_save("dist_plot")
     plot.plot()

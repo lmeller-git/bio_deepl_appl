@@ -28,4 +28,5 @@ class Clusterplotter(Plotter):
 def cluster_plot(p: str = ".data/project_data/mega_train.csv"):
     plot = Clusterplotter()
     plot.update(p)
+    plot.should_save("cluster_plot")
     plot.plot()

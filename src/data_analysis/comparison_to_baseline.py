@@ -23,23 +23,17 @@ class ComparisonResult:
         n.rmse = (
             self.rmse + rhs.rmse
             if self.rmse is not None
-            else rhs.rmse
-            if rhs.rmse is not None
-            else None
+            else rhs.rmse if rhs.rmse is not None else None
         )
         n.scc = (
             self.scc + rhs.scc
             if self.scc is not None
-            else rhs.scc
-            if rhs.scc is not None
-            else None
+            else rhs.scc if rhs.scc is not None else None
         )
         n.pcc = (
             self.pcc + rhs.pcc
             if self.pcc is not None
-            else rhs.pcc
-            if rhs.pcc is not None
-            else None
+            else rhs.pcc if rhs.pcc is not None else None
         )
         return n
 
@@ -48,23 +42,17 @@ class ComparisonResult:
         n.rmse = (
             self.rmse - rhs.rmse
             if self.rmse is not None
-            else rhs.rmse
-            if rhs.rmse is not None
-            else None
+            else rhs.rmse if rhs.rmse is not None else None
         )
         n.scc = (
             self.scc - rhs.scc
             if self.scc is not None
-            else rhs.scc
-            if rhs.scc is not None
-            else None
+            else rhs.scc if rhs.scc is not None else None
         )
         n.pcc = (
             self.pcc - rhs.pcc
             if self.pcc is not None
-            else rhs.pcc
-            if rhs.pcc is not None
-            else None
+            else rhs.pcc if rhs.pcc is not None else None
         )
         return n
 
@@ -150,6 +138,9 @@ class ComparisonPlotter(Plotter):
 
         return s
 
+    def __str__(self):
+        return "corr_plot"
+
 
 def baseline(
     models: list[nn.Module],
@@ -167,18 +158,22 @@ def baseline(
         "baseline",
         ComparisonResult(
             rmse=val_data["RMSE"] if "RMSE" in val_data.keys() else None,
-            scc=val_data["Spearman Correlation"]
-            if "Spearman Correlation" in val_data.keys()
-            else None,
-            pcc=val_data["Pearson Correlation"]
-            if "Pearson Correlation" in val_data.keys()
-            else None,
+            scc=(
+                val_data["Spearman Correlation"]
+                if "Spearman Correlation" in val_data.keys()
+                else None
+            ),
+            pcc=(
+                val_data["Pearson Correlation"]
+                if "Pearson Correlation" in val_data.keys()
+                else None
+            ),
         ),
     )
     all_y = []
     all_yhat = [[] for _ in range(len(models))]
     for (embs, embs_mut), lbl in test_data:
-        embs= embs.cpu()
+        embs = embs.cpu()
         lbl = lbl.cpu()
         embs_mut.cpu()
         for i, model in enumerate(models):
@@ -195,15 +190,20 @@ def baseline(
             "model " + str(i),
             ComparisonResult(
                 rmse=val_data["RMSE"] if "RMSE" in val_data.keys() else None,
-                scc=val_data["Spearman Correlation"]
-                if "Spearman Correlation" in val_data.keys()
-                else None,
-                pcc=val_data["Pearson Correlation"]
-                if "Pearson Correlation" in val_data.keys()
-                else None,
+                scc=(
+                    val_data["Spearman Correlation"]
+                    if "Spearman Correlation" in val_data.keys()
+                    else None
+                ),
+                pcc=(
+                    val_data["Pearson Correlation"]
+                    if "Pearson Correlation" in val_data.keys()
+                    else None
+                ),
             ),
         )
 
     plotter.finalize()
-    print(plotter)
+    print(repr(plotter))
+    plotter.should_save("cor")
     plotter.plot()
