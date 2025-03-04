@@ -21,13 +21,13 @@ def main(args):
         cluster_plot,
         ModelParams,
         make_predictions,
+        load_model,
+        cross_validate,
     )
 
     # print(args)
     # model = Siamese(hidden_dim=512, n_layers=2) #LeakyMLP(768)
-    model = MLP(
-        ModelParams(act=nn.ReLU)
-    )
+    model = MLP(ModelParams(act=nn.ReLU))
     if args.mode == "cv":
         params = TrainParams(
             args.data,
@@ -47,6 +47,10 @@ def main(args):
         cluster_plot(args.data + "project_data/mega_train.csv")
         cluster_plot(args.data + "project_data/mega_val.csv")
         cluster_plot(args.data + "project_data/mega_test.csv")
+        model = load_model(OUT + "best_model.pth")
+        cross_validate(model, args.data + "project_data/mega_train.csv")
+        cross_validate(model, args.data + "project_data/mega_val.csv")
+        cross_validate(model, args.data + "project_data/mega_test.csv")
         return
     elif args.mode == "predict":
         _ = make_predictions(args.wt, args.mutations)

@@ -132,7 +132,6 @@ def load_df(p: str, batch_size: int = 1024):
 
 
 class PlotPredQualityMap(Plotter):
-
     def update(self, df: pd.DataFrame):
         self.df = df
 
@@ -145,7 +144,6 @@ class PlotPredQualityMap(Plotter):
 
 
 class PlotPredQuality(Plotter):
-
     def update(self, low: pd.DataFrame, hi: pd.DataFrame, counts: pd.DataFrame):
         self.low = low
         self.hi = hi
@@ -284,7 +282,7 @@ def cross_validate(
     selected_groups = list(df_h["Group"].unique()) + list(df_l["Group"].unique())
     group_counts_smol = group_counts[group_counts["mutation"].isin(selected_groups)]
     plotter.update(df_l, df_h, group_counts_smol)
-    plotter.should_save("hi_lo_qual")
+    plotter.should_save("hi_lo_qual" + p.split("/")[-1])
     plotter.plot()
 
     pearson_dict = dict(group_data[:10] + group_data[-10:])
@@ -310,7 +308,7 @@ def cross_validate(
 
     map_plotter = PlotPredQualityMap()
     map_plotter.update(df_heatmap)
-    map_plotter.should_save("qual_map")
+    map_plotter.should_save("qual_map" + p.split("/")[-1])
     map_plotter.plot()
 
     return
