@@ -10,7 +10,7 @@ class TrainParams:
 
 
 def save_model(model: torch.nn.Module, path: str = OUT + "best_model.pth") -> None:
-    torch.save(model.state_dict(), path)
+    torch.save(model.cpu().state_dict(), path)
 
 
 def load_model(path: str = OUT + "best_model.pth") -> torch.nn.Module:
@@ -53,7 +53,6 @@ class Plotter(ABC):
         pass
 
     def should_save(self, p: str = "") -> None:
-
         original_show = plt.show
 
         def custom_show(*args, **kwargs):

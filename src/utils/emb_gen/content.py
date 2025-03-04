@@ -11,9 +11,10 @@ import shutil
 
 def get_emb(seq: str, muts: list[str]) -> tuple[torch.Tensor, list[torch.Tensor]]:
     with open("/tmp/seq.fasta", "w") as f:
+        print(f">wt", file=f)
 
+        print(seq, file=f)
         for mut in muts:
-
             aa_pos = int(mut[1:-1])
 
             aa_ref = mut[0]
@@ -27,11 +28,14 @@ def get_emb(seq: str, muts: list[str]) -> tuple[torch.Tensor, list[torch.Tensor]
             assert seq[aa_pos - 1] == aa_ref
 
             assert mut_seq[aa_pos - 1] == aa_alt
+            print(f">{mut}", file=f)
+
+            print(mut_seq, file=f)
 
     parser = esm.scripts.extract.create_parser()
 
     args = parser.parse_args(
-        ["esm1_t6_43M_UR50S", "sequences.fasta", "embeddings", "--include", "mean"]
+        ["esm1_t6_43M_UR50S", "/tmp/seq.fasta", "embeddings", "--include", "mean"]
     )
 
     esm.scripts.extract.run(args)
@@ -56,13 +60,11 @@ def main():
 
     print(len(mutations), "mutations")
     with open("sequences.fasta", "w") as fh:
-
         print(f">wt", file=fh)
 
         print(wt_seq, file=fh)
 
         for mut in mutations:
-
             aa_pos = int(mut[1:-1])
 
             aa_ref = mut[0]
