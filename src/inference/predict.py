@@ -10,6 +10,7 @@ def make_predictions(wt: str, muts: list[str]) -> list[float]:
 
     wt_emb, embs = get_emb(wt, muts)
     model = load_model(OUT + "best_model.pth")
+    model.eval()
     preds = []
     for emb, mut in enumerate(zip(embs, muts)):
         p = model(wt_emb, emb)

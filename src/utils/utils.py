@@ -1,6 +1,7 @@
 import torch
 from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
+from src.modelling.models import MLP
 
 # from src.config import VERBOSITY, OUT
 
@@ -11,11 +12,11 @@ class TrainParams:
 
 def save_model(model: torch.nn.Module, path: str = OUT + "best_model.pth") -> None:
     model.cpu()
-    torch.save(model.state_dict(), path)
+    torch.save(model, path)
 
 
 def load_model(path: str = OUT + "best_model.pth") -> torch.nn.Module:
-    torch.load(path)
+    return torch.load(path, weights_only=False)
 
 
 def save_params(params: TrainParams, path: str = OUT + "params.csv") -> None:
