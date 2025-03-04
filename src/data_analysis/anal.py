@@ -13,7 +13,7 @@ class DistPlotter(Plotter):
 
     def plot(self):
         sns.histplot(data=self.lbls)
-        plt.plot()
+        plt.show()
 
     def update(self, lbl: float, *args, **kwargs):
         self.lbls.append(lbl)
