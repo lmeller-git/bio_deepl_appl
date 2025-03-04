@@ -1,19 +1,21 @@
 from Bio import SeqIO
 import re
 from src.utils import get_emb, load_model
+import torch
 
 
 def make_predictions(wt: str, muts: list[str]) -> list[float]:
     wt = get_sequence(wt)
 
     muts = get_muts(muts, wt)
-
     wt_emb, embs = get_emb(wt, muts)
     model = load_model(OUT + "best_model.pth")
     model.eval()
     preds = []
-    for emb, mut in enumerate(zip(embs, muts)):
-        p = model(wt_emb, emb)
+    wt_emb = wt_emb.unsqueeze(0)
+    for i, (emb, mut) in enumerate(zip(embs, muts)):
+        emb = emb.unsqueeze(0)
+        p = model(wt_emb, emb).squeeze()
         print(f"ddG of mutation {mut}: {p:.3f}")
         preds.append(p)
 

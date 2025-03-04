@@ -39,8 +39,15 @@ def get_emb(seq: str, muts: list[str]) -> tuple[torch.Tensor, list[torch.Tensor]
     )
 
     esm.scripts.extract.run(args)
-    wt_emb = torch.load("embeddings/wt.pt")["mean_representations"][6]
-    embs = [torch.load("embeddings/" + p + ".pt") for p in muts]
+    wt_emb = torch.load("embeddings/wt.pt", weights_only=True)["mean_representations"][
+        6
+    ]
+    embs = [
+        torch.load("embeddings/" + p + ".pt", weights_only=True)[
+            "mean_representations"
+        ][6]
+        for p in muts
+    ]
     shutil.rmtree("embeddings")
     return wt_emb, embs
 
