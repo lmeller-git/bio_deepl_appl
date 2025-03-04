@@ -135,6 +135,69 @@ def load_df(p: str, batch_size: int = 1024):
     return (dataloader_train, dataloader_val, dataloader_test)
 
 
+class PlotMutDist(Plotter):
+
+    def plot(self):
+
+        plt.figure(figsize=(14, 8))
+        sns.barplot(
+            data=self.all_counts,
+            x="mutation",
+            y="Occurrences",
+            hue="Dataset",
+            palette="viridis",
+        )
+
+        plt.xticks(rotation=90)  # Rotate mutation type labels for better readability
+        plt.title("Occurrences of Mutation Types Across Datasets")
+        plt.xlabel("Mutation Type")
+        plt.ylabel("Occurrences")
+        plt.legend(title="Dataset")
+        plt.tight_layout()
+        plt.show()
+        pass
+
+    def update(self, train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame):
+        train_counts = train["mutation"].value_counts().reset_index(name="Occurrences")
+        train_counts["Dataset"] = "train"
+        test_counts = test["mutation"].value_counts().reset_index(name="Occurrences")
+        test_counts["Dataset"] = "test"
+        val_counts = val["mutation"].value_counts().reset_index(name="Occurrences")
+        val_counts["Dataset"] = "val"
+        val_counts.columns = ["mutation", "Occurrences", "Dataset"]
+        test_counts.columns = ["mutation", "Occurrences", "Dataset"]
+        train_counts.columns = ["mutation", "Occurrences", "Dataset"]
+        self.all_counts = pd.concat(
+            [train_counts, val_counts, test_counts], ignore_index=True
+        )
+        # self.all_counts.rename(columns={"index": "Mutation Type"}, inplace=True)
+
+    def clear(self):
+        pass
+
+
+def get_mut_type(df: pd.DataFrame) -> pd.DataFrame:
+    df = df[["mut_type"]]
+    df[["mut_from", "mut_to"]] = df["mut_type"].str.extract(r"([A-Z])\d*([A-Z])")
+    df["mutation"] = df["mut_from"] + df["mut_to"]
+    df.drop(columns=["mut_from", "mut_to"], inplace=True)
+    df.dropna(inplace=True)
+    return df
+
+
+def plot_mut_dist(data: str = "./data/"):
+    test = pd.read_csv(data + "project_data/mega_test.csv")
+    val = pd.read_csv(data + "project_data/mega_val.csv")
+    train = pd.read_csv(data + "project_data/mega_train.csv")
+    test = get_mut_type(test)
+    train = get_mut_type(train)
+    val = get_mut_type(val)
+    plotter = PlotMutDist()
+    plotter.update(train, val, test)
+    plotter.should_save("mut_dist")
+    plotter.plot()
+
+
 class PlotPredQualityMap(Plotter):
     def update(self, df: pd.DataFrame):
         self.df = df

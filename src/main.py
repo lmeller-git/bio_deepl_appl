@@ -24,6 +24,7 @@ def main(args):
         load_model,
         cross_validate,
         load_df,
+        plot_mut_dist,
     )
 
     # print(args)
@@ -42,6 +43,7 @@ def main(args):
             d_batch_size=args.delta_batchsize,
         )
     elif args.mode == "anal":
+        plot_mut_dist(args.data)
         dist_plot(args.data + "project_data/mega_train.csv")
         dist_plot(args.data + "project_data/mega_val.csv")
         dist_plot(args.data + "project_data/mega_test.csv")

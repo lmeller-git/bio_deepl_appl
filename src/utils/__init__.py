@@ -3,6 +3,7 @@ from src.utils.emb.content import (
     ProtEmbeddingDataset,
     validate,
     cross_validate,
+    plot_mut_dist,
 )
 from src.utils.utils import (
     Plotter,
@@ -26,4 +27,5 @@ __all__ = [
     "validate",
     "cross_validate",
     "get_emb",
+    "plot_mut_dist",
 ]
