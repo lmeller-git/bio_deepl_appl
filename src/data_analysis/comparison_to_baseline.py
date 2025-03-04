@@ -159,7 +159,7 @@ def baseline(
     callbacks: list[str],
     test_data: tdata.DataLoader,
     plotter: ComparisonPlotter = ComparisonPlotter(),
-    p: str = "./data/",
+    p: str = "./data/project_data/mega_val.csv",
 ):
     (baseline_pred, baseline_truth) = blosum.main(p)
 

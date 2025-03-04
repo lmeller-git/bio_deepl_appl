@@ -159,8 +159,8 @@ class BlosumBaseline:
         return self.forward(sequence)
 
 
-def main(p: str = "./data/"):
-    dataset_test = SequenceData(p + "project_data/mega_test.csv")
+def main(p: str = "./data/project_data/mega_test.csv"):
+    dataset_test = SequenceData(p)
 
     dataloader_test = DataLoader(dataset_test, batch_size=1, shuffle=False)
     # naive benchmark
