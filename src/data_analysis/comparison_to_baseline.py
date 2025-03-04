@@ -23,17 +23,23 @@ class ComparisonResult:
         n.rmse = (
             self.rmse + rhs.rmse
             if self.rmse is not None
-            else rhs.rmse if rhs.rmse is not None else None
+            else rhs.rmse
+            if rhs.rmse is not None
+            else None
         )
         n.scc = (
             self.scc + rhs.scc
             if self.scc is not None
-            else rhs.scc if rhs.scc is not None else None
+            else rhs.scc
+            if rhs.scc is not None
+            else None
         )
         n.pcc = (
             self.pcc + rhs.pcc
             if self.pcc is not None
-            else rhs.pcc if rhs.pcc is not None else None
+            else rhs.pcc
+            if rhs.pcc is not None
+            else None
         )
         return n
 
@@ -42,17 +48,23 @@ class ComparisonResult:
         n.rmse = (
             self.rmse - rhs.rmse
             if self.rmse is not None
-            else rhs.rmse if rhs.rmse is not None else None
+            else rhs.rmse
+            if rhs.rmse is not None
+            else None
         )
         n.scc = (
             self.scc - rhs.scc
             if self.scc is not None
-            else rhs.scc if rhs.scc is not None else None
+            else rhs.scc
+            if rhs.scc is not None
+            else None
         )
         n.pcc = (
             self.pcc - rhs.pcc
             if self.pcc is not None
-            else rhs.pcc if rhs.pcc is not None else None
+            else rhs.pcc
+            if rhs.pcc is not None
+            else None
         )
         return n
 
