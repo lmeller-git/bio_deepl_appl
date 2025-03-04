@@ -23,6 +23,7 @@ def main(args):
         make_predictions,
         load_model,
         cross_validate,
+        load_df,
     )
 
     # print(args)
@@ -44,13 +45,14 @@ def main(args):
         dist_plot(args.data + "project_data/mega_train.csv")
         dist_plot(args.data + "project_data/mega_val.csv")
         dist_plot(args.data + "project_data/mega_test.csv")
-        cluster_plot(args.data + "project_data/mega_train.csv")
-        cluster_plot(args.data + "project_data/mega_val.csv")
-        cluster_plot(args.data + "project_data/mega_test.csv")
+        # cluster_plot(args.data + "project_data/mega_train.csv")
+        # cluster_plot(args.data + "project_data/mega_val.csv")
+        # cluster_plot(args.data + "project_data/mega_test.csv")
         model = load_model(OUT + "best_model.pth")
-        cross_validate(model, args.data + "project_data/mega_train.csv")
-        cross_validate(model, args.data + "project_data/mega_val.csv")
-        cross_validate(model, args.data + "project_data/mega_test.csv")
+        train_df, val_df, test_df = load_df(args.data, args.batchsize)
+        cross_validate(model, train_df, args.data + "project_data/mega_train.csv")
+        cross_validate(model, val_df, args.data + "project_data/mega_val.csv")
+        cross_validate(model, test_df, args.data + "project_data/mega_test.csv")
         return
     elif args.mode == "predict":
         _ = make_predictions(args.wt, args.mutations)

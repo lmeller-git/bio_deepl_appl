@@ -76,17 +76,21 @@ class ProtEmbeddingDataset(Dataset):
 
         tensor_path = os.path.join(self.tensor_folder, self.ids[idx] + ".pt")
 
-        tensor = torch.load(tensor_path)["mean_representations"][6]
+        tensor = torch.load(tensor_path, weights_only=True)["mean_representations"][6]
 
         # wildtype embedding, uncomment if you want to use this, too
         try:
             tensor_path_wt = os.path.join(
                 self.tensor_folder, self.wt_names[idx] + ".pt"
             )
-            tensor_wt = torch.load(tensor_path_wt)["mean_representations"][6]
+            tensor_wt = torch.load(tensor_path_wt, weights_only=True)[
+                "mean_representations"
+            ][6]
         except FileNotFoundError:
             tensor_path_wt = os.path.join(self.tensor_folder, self.ids[idx] + ".pt")
-            tensor_wt = torch.load(tensor_path_wt)["mean_representations"][6]
+            tensor_wt = torch.load(tensor_path_wt, weights_only=True)[
+                "mean_representations"
+            ][6]
 
         label = self.labels[idx]  # ddG value
         # simple difference between embedings
@@ -203,7 +207,7 @@ class PlotPredQuality(Plotter):
 def cross_validate(
     model: nn.Module, val: DataLoader, p: str = "./data/project_data/mega_val.csv"
 ):
-    model.cpu()
+    model.cpu().eval()
     # your code
     preds = []
 
