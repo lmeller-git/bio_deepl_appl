@@ -12,7 +12,7 @@ def make_predictions(wt: str, muts: list[str]) -> list[float]:
     model = load_model(OUT + "best_model.pth")
     preds = []
     for emb, mut in enumerate(zip(embs, muts)):
-        p = model(wt_emb, mut)
+        p = model(wt_emb, emb)
         print(f"ddG of mutation {mut}: {p:.3f}")
         preds.append(p)
 
