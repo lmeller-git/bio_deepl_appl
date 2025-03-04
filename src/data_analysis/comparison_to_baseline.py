@@ -158,9 +158,10 @@ def baseline(
     models: list[nn.Module],
     callbacks: list[str],
     test_data: tdata.DataLoader,
-    plotter: ComparisonPlotter = ComparisonPlotter(),
+    plotter: ComparisonPlotter = None,
     p: str = "./data/project_data/mega_val.csv",
 ):
+    plotter = plotter if plotter is not None else ComparisonPlotter()
     (baseline_pred, baseline_truth) = blosum.main(p)
 
     val_data = data_analysis.validate(
