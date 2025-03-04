@@ -191,7 +191,7 @@ def kfold(params: TrainParams) -> nn.Module:
                 case _:
                     print(f"case {k} is not defined")
         kfold_params.append(
-            TrainParams(params.train_df, base_epochs, base_lr, base_batch_size)
+            TrainParams(params.train_df, params.out, base_epochs, base_lr, base_batch_size)
         )
 
     for split, (train_idc, val_idc) in enumerate(kf.split(train_data.ids)):
