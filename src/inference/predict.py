@@ -45,5 +45,5 @@ def mut_from_seq(s1: str, s2: str) -> str:
     for i, (a1, a2) in enumerate(zip(s1, s2)):
         if a1 == a2:
             continue
-        return a1 + str(i + 1) + a2
+        return a2 + str(i + 1) + a1
     return ""
