@@ -47,7 +47,7 @@ def main(args):
             d_epoch=args.delta_epochs,
             d_batch_size=args.delta_batchsize,
         )
-    elif args.mode == "anal":
+    elif args.mode == "analysis":
         plot_mut_dist(args.data)
         dist_plot(args.data)
         # cluster_plot(args.data + "project_data/mega_train.csv")
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     subparsers = parser.add_subparsers(dest="mode")
 
-    anal_parser = subparsers.add_parser("anal", help="data analysis")
+    anal_parser = subparsers.add_parser("analysis", help="data analysis")
 
     inference_parser = subparsers.add_parser(
         "predict", help="predict ddG values for all provided mutations"

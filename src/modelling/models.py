@@ -143,10 +143,12 @@ class TriameseNetwork(nn.Module):
         siamese_params: ModelParams = ModelParams(out_shape=256),
         mlp_params: ModelParams = ModelParams(out_shape=256),
         head_params: ModelParams = ModelParams(in_shape=512),
+        m: object = diff,
+        **margs,
     ):
         super().__init__()
         self.siamese_net = Siamese(siamese_params)
-        self.mlp = MLP(mlp_params, m=F.mse_loss, reduction="none")
+        self.mlp = MLP(mlp_params, m=m, **margs)
         self.head = nn.Sequential(
             block(
                 mlp_params.out_shape + siamese_params.out_shape,
