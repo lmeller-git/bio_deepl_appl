@@ -385,7 +385,8 @@ def cross_validate(
     s = ""
     for s_ in p_:
         s += s_
-    s += "/"
+        s += "/"
+
     plot_mut_dist(data=s, which=selected_groups, name=p.split("/")[-1])
 
     return
