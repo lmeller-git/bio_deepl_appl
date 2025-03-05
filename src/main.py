@@ -26,6 +26,7 @@ def main(args):
         load_df,
         plot_mut_dist,
         make_structure_pred,
+        baseline,
     )
 
     # print(args)
@@ -48,14 +49,36 @@ def main(args):
             d_batch_size=args.delta_batchsize,
         )
     elif args.mode == "analysis":
-        if args.no_model:
+        if len(args.compare) > 0:
+            train_df, val_df, test_df = load_df(args.data, args.batchsize)
+            models = [load_model("".join(p)) for p in args.compare]
+            baseline(
+                models,
+                ["acc", "spearman", "pearson", "rmse"],
+                train_df,
+                p=args.data + "project_data/mega_train.csv",
+            )
+            baseline(
+                models,
+                ["acc", "spearman", "pearson", "rmse"],
+                val_df,
+                p=args.data + "project_data/mega_val.csv",
+            )
+            baseline(
+                models,
+                ["acc", "spearman", "pearson", "rmse"],
+                test_df,
+                p=args.data + "project_data/mega_test.csv",
+            )
+            return
+        if args.model == "":
             plot_mut_dist(args.data)
             dist_plot(args.data)
             # cluster_plot(args.data + "project_data/mega_train.csv")
             # cluster_plot(args.data + "project_data/mega_val.csv")
             # cluster_plot(args.data + "project_data/mega_test.csv")
             return
-        model = load_model(OUT + "best_model.pth")
+        model = load_model(args.model)
         train_df, val_df, test_df = load_df(args.data, args.batchsize)
         cross_validate(model, val_df, args.data + "project_data/mega_val.csv")
         cross_validate(model, test_df, args.data + "project_data/mega_test.csv")
@@ -86,8 +109,13 @@ if __name__ == "__main__":
 
     anal_parser = subparsers.add_parser("analysis", help="data analysis")
     anal_parser.add_argument(
-        "--no_model", action="store_true", default=False, help="only general analysis"
+        "--compare",
+        default=[],
+        nargs="+",
+        type=list[str],
+        help="compare multiple models",
     )
+    anal_parser.add_argument("--model", default="", help="path to model")
     inference_parser = subparsers.add_parser(
         "predict", help="predict ddG values for all provided mutations"
     )

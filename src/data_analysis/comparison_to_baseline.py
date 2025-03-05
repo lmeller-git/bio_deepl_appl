@@ -31,30 +31,22 @@ class ComparisonResult:
         n.rmse = (
             self.rmse + rhs.rmse
             if self.rmse is not None
-            else rhs.rmse
-            if rhs.rmse is not None
-            else None
+            else rhs.rmse if rhs.rmse is not None else None
         )
         n.scc = (
             self.scc + rhs.scc
             if self.scc is not None
-            else rhs.scc
-            if rhs.scc is not None
-            else None
+            else rhs.scc if rhs.scc is not None else None
         )
         n.pcc = (
             self.pcc + rhs.pcc
             if self.pcc is not None
-            else rhs.pcc
-            if rhs.pcc is not None
-            else None
+            else rhs.pcc if rhs.pcc is not None else None
         )
         n.acc = (
             self.acc + rhs.acc
             if self.acc is not None
-            else rhs.acc
-            if rhs.acc is not None
-            else None
+            else rhs.acc if rhs.acc is not None else None
         )
         return n
 
@@ -63,30 +55,22 @@ class ComparisonResult:
         n.rmse = (
             self.rmse - rhs.rmse
             if self.rmse is not None
-            else rhs.rmse
-            if rhs.rmse is not None
-            else None
+            else rhs.rmse if rhs.rmse is not None else None
         )
         n.scc = (
             self.scc - rhs.scc
             if self.scc is not None
-            else rhs.scc
-            if rhs.scc is not None
-            else None
+            else rhs.scc if rhs.scc is not None else None
         )
         n.pcc = (
             self.pcc - rhs.pcc
             if self.pcc is not None
-            else rhs.pcc
-            if rhs.pcc is not None
-            else None
+            else rhs.pcc if rhs.pcc is not None else None
         )
         n.acc = (
             self.acc - rhs.acc
             if self.acc is not None
-            else rhs.acc
-            if rhs.acc is not None
-            else None
+            else rhs.acc if rhs.acc is not None else None
         )
         return n
 
@@ -251,6 +235,10 @@ def baseline(
     plotter.should_save("cor" + p.split("/")[-1])
     plotter.plot()
 
-    data_analysis.validate(
-        all_y, all_yhat, performance_metric=callbacks, p=p.split("/")[-1]
-    )
+    for i in range(len(models)):
+        data_analysis.validate(
+            all_y,
+            all_yhat[i],
+            performance_metric=callbacks,
+            p=p.split("/")[-1] + f"model{i}",
+        )
