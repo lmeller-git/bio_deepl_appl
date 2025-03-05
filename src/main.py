@@ -48,11 +48,13 @@ def main(args):
             d_batch_size=args.delta_batchsize,
         )
     elif args.mode == "analysis":
-        plot_mut_dist(args.data)
-        dist_plot(args.data)
-        # cluster_plot(args.data + "project_data/mega_train.csv")
-        # cluster_plot(args.data + "project_data/mega_val.csv")
-        # cluster_plot(args.data + "project_data/mega_test.csv")
+        if args.no_model:
+            plot_mut_dist(args.data)
+            dist_plot(args.data)
+            # cluster_plot(args.data + "project_data/mega_train.csv")
+            # cluster_plot(args.data + "project_data/mega_val.csv")
+            # cluster_plot(args.data + "project_data/mega_test.csv")
+            return
         model = load_model(OUT + "best_model.pth")
         train_df, val_df, test_df = load_df(args.data, args.batchsize)
         cross_validate(model, val_df, args.data + "project_data/mega_val.csv")
@@ -83,7 +85,9 @@ if __name__ == "__main__":
     subparsers = parser.add_subparsers(dest="mode")
 
     anal_parser = subparsers.add_parser("analysis", help="data analysis")
-
+    anal_parser.add_argument(
+        "--no_model", action="store_true", default=False, help="only general analysis"
+    )
     inference_parser = subparsers.add_parser(
         "predict", help="predict ddG values for all provided mutations"
     )
