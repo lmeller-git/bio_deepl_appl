@@ -248,5 +248,9 @@ def baseline(
 
     plotter.finalize()
     print(repr(plotter))
-    plotter.should_save("cor")
+    plotter.should_save("cor" + p.split("/")[-1])
     plotter.plot()
+
+    data_analysis.validate(
+        all_y, all_yhat, performance_metric=callbacks, p=p.split("/")[-1]
+    )

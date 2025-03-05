@@ -399,7 +399,7 @@ def cross_validate(
     plt.show()
 
 
-def validate(model: nn.Module, val: DataLoader):
+def validate(model: nn.Module, val: DataLoader, p: str = "test"):
     model.cpu()
     # your code
     preds = []
@@ -429,7 +429,7 @@ def validate(model: nn.Module, val: DataLoader):
     plt.xlabel("Predicted ddG")
 
     plt.ylabel("Measured ddG")
-    plt.savefig(OUT + "pred_vs_lbl.png")
+    plt.savefig(OUT + f"pred_vs_lbl_{p}.png")
     if VERBOSITY >= 2:
         plt.show()
     else:

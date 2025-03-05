@@ -107,12 +107,18 @@ def train(model: nn.Module | None, params: TrainParams):
         test_df,
         p=params.train_df + "project_data/mega_test.csv",
     )
-    utils.validate(model, val_df)
-    utils.validate(model, test_df)
+    data_analysis.baseline(
+        [model.cpu()],
+        ["rmse", "spearman", "pearson", "acc"],
+        test_df,
+        p=params.train_df + "project_data/mega_train.csv",
+    )
+
+    utils.validate(model, val_df, "val")
+    utils.validate(model, test_df, "test")
+    utils.validate(model, train_df, "train")
     cross_validate(model, val_df, params.train_df + "project_data/mega_val.csv")
     cross_validate(model, test_df, params.train_df + "project_data/mega_test.csv")
-
-    # VERY slow?
     cross_validate(model, train_df, params.train_df + "project_data/mega_train.csv")
 
 
