@@ -136,9 +136,7 @@ def load_df(p: str, batch_size: int = 1024):
 
 
 class PlotMutDist(Plotter):
-
     def plot(self):
-
         plt.figure(figsize=(14, 8))
         sns.barplot(
             data=self.all_counts,
@@ -185,13 +183,18 @@ def get_mut_type(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def plot_mut_dist(data: str = "./data/"):
+def plot_mut_dist(data: str = "./data/", which: list[str] = None):
     test = pd.read_csv(data + "project_data/mega_test.csv")
     val = pd.read_csv(data + "project_data/mega_val.csv")
     train = pd.read_csv(data + "project_data/mega_train.csv")
     test = get_mut_type(test)
     train = get_mut_type(train)
     val = get_mut_type(val)
+    if which is not None:
+        train = train[train["mutation"].isin(which)]
+        val = val[val["mutation"].isin(which)]
+        test = test[test["mutation"].isin(which)]
+
     plotter = PlotMutDist()
     plotter.update(train, val, test)
     plotter.should_save("mut_dist")
@@ -377,6 +380,8 @@ def cross_validate(
     map_plotter.update(df_heatmap)
     map_plotter.should_save("qual_map" + p.split("/")[-1])
     map_plotter.plot()
+
+    plot_mut_dist(which=selected_groups)
 
     return
 

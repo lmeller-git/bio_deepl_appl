@@ -52,9 +52,9 @@ def main(args):
         # cluster_plot(args.data + "project_data/mega_test.csv")
         model = load_model(OUT + "best_model.pth")
         train_df, val_df, test_df = load_df(args.data, args.batchsize)
-        cross_validate(model, train_df, args.data + "project_data/mega_train.csv")
         cross_validate(model, val_df, args.data + "project_data/mega_val.csv")
         cross_validate(model, test_df, args.data + "project_data/mega_test.csv")
+        cross_validate(model, train_df, args.data + "project_data/mega_train.csv")
         return
     elif args.mode == "predict":
         _ = make_predictions(args.wt, args.mutations)
