@@ -30,6 +30,10 @@ def dot_product(a, b):
     return torch.bmm(a, b.transpose(1, 2))
 
 
+def diff(a, b):
+    return b - a
+
+
 def cosine_dissimilarity(a, b):
     dot_prod = torch.bmm(a, b.transpose(1, 2))
 
@@ -57,7 +61,7 @@ class BasicMLP(nn.Module):
 
 
 class MLP(nn.Module):
-    def __init__(self, params: ModelParams = ModelParams()):
+    def __init__(self, params: ModelParams = ModelParams(), m=diff, **margs):
         super().__init__()
         self.input = block(params.in_shape, params.hidden_dim, act=params.act)
         self.hidden = nn.ModuleList()
@@ -66,9 +70,11 @@ class MLP(nn.Module):
                 block(params.hidden_dim, params.hidden_dim, act=params.act)
             )
         self.out = nn.Linear(params.hidden_dim, params.out_shape)
+        self.margs = margs
+        self.m = m
 
     def forward(self, wt, mut, *args, **kwargs):
-        x = F.mse_loss(wt, mut, reduction="none")  # mut - wt
+        x = self.m(wt, mut, **self.margs)  # mut - wt
         x = self.input(x)
         for layer in self.hidden:
             x = layer(x)
@@ -140,7 +146,7 @@ class TriameseNetwork(nn.Module):
     ):
         super().__init__()
         self.siamese_net = Siamese(siamese_params)
-        self.mlp = MLP(mlp_params)
+        self.mlp = MLP(mlp_params, m=F.mse_loss, reduction="none")
         self.head = nn.Sequential(
             block(
                 mlp_params.out_shape + siamese_params.out_shape,
