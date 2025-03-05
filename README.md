@@ -20,7 +20,7 @@ add src to you PYTHONPATH
 ```$ python src/main.py --data <path-to-data-dir>```
 
 The data directory should have this structure:  
-
+```
 data
 └── project_data
     ├── mega_test.csv
@@ -29,4 +29,4 @@ data
     ├── mega_train_embeddings
     ├── mega_val.csv
     └── mega_val_embeddings
-
+```
