@@ -49,9 +49,7 @@ def main(args):
         )
     elif args.mode == "anal":
         plot_mut_dist(args.data)
-        dist_plot(args.data + "project_data/mega_train.csv")
-        dist_plot(args.data + "project_data/mega_val.csv")
-        dist_plot(args.data + "project_data/mega_test.csv")
+        dist_plot(args.data)
         # cluster_plot(args.data + "project_data/mega_train.csv")
         # cluster_plot(args.data + "project_data/mega_val.csv")
         # cluster_plot(args.data + "project_data/mega_test.csv")
