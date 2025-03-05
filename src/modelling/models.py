@@ -26,6 +26,22 @@ def block(
     return layer
 
 
+def dot_product(a, b):
+    return torch.bmm(a, b.transpose(1, 2))
+
+
+def cosine_dissimilarity(a, b):
+    dot_prod = torch.bmm(a, b.transpose(1, 2))
+
+    norm_a = torch.norm(a, p=2, dim=2, keepdim=True)
+    norm_b = torch.norm(b, p=2, dim=2, keepdim=True)
+
+    cosine_sim = dot_prod / (norm_a * norm_b.transpose(1, 2))
+    cosine_diss = 1 - cosine_sim
+
+    return cosine_diss
+
+
 class BasicMLP(nn.Module):
     def __init__(self, params: ModelParams = ModelParams()):
         super().__init__()
