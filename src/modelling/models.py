@@ -1,6 +1,7 @@
 from torch import nn
 import torch
 from dataclasses import dataclass
+import torch.nn.functional as F
 
 
 @dataclass
@@ -51,7 +52,7 @@ class MLP(nn.Module):
         self.out = nn.Linear(params.hidden_dim, params.out_shape)
 
     def forward(self, wt, mut, *args, **kwargs):
-        x = mut - wt
+        x = F.mse_loss(wt, mut, reduction="none")  # mut - wt
         x = self.input(x)
         for layer in self.hidden:
             x = layer(x)

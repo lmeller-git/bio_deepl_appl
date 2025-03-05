@@ -209,6 +209,7 @@ def baseline(
                 if "Pearson Correlation" in val_data.keys()
                 else None
             ),
+            acc=(val_data["acc"] if "acc" in val_data.keys() else None),
         ),
     )
     all_y = []
