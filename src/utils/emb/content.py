@@ -183,7 +183,7 @@ def get_mut_type(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def plot_mut_dist(data: str = "./data/", which: list[str] = None):
+def plot_mut_dist(data: str = "./data/", which: list[str] = None, name: str = ""):
     test = pd.read_csv(data + "project_data/mega_test.csv")
     val = pd.read_csv(data + "project_data/mega_val.csv")
     train = pd.read_csv(data + "project_data/mega_train.csv")
@@ -197,7 +197,7 @@ def plot_mut_dist(data: str = "./data/", which: list[str] = None):
 
     plotter = PlotMutDist()
     plotter.update(train, val, test)
-    plotter.should_save("mut_dist")
+    plotter.should_save("mut_dist_" + name)
     plotter.plot()
 
 
@@ -381,7 +381,7 @@ def cross_validate(
     map_plotter.should_save("qual_map" + p.split("/")[-1])
     map_plotter.plot()
 
-    plot_mut_dist(which=selected_groups)
+    plot_mut_dist(which=selected_groups, name=p.split("/")[-1])
 
     return
 
