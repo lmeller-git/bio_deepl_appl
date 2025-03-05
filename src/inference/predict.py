@@ -12,22 +12,30 @@ from pymol import cmd
 import numpy as np
 
 
-def color_by_values(pdb_file, value_dict, palette="rainbow"):
-    """Color residues by value dictionary using PyMOL API."""
-    cmd.load(pdb_file)
+def color_by_values(pdb_file, value_dict, chain="A"):
+    """Color protein residues based on numerical values."""
+    cmd.load(pdb_file, "protein")
 
-    # Normalize values
+    # Normalize values to [0, 1]
     values = np.array(list(value_dict.values()))
     min_val, max_val = values.min(), values.max()
+
+    # Disable default colors
+    cmd.util.cba()  # Clear B-factor coloring
+
     for resi, val in value_dict.items():
-        # normalized = (val - min_val) / (max_val - min_val)
+        normalized = (val - min_val) / (max_val - min_val)
+        color_rgb = [normalized, 0, 1 - normalized]  # Blue → Red gradient
         color_name = f"color_{resi}"
 
-        # Gradient from blue (low) to red (high)
-        color_rgb = [min_val, 0, max_val]
         cmd.set_color(color_name, color_rgb)
-        cmd.color(color_name, f"resi {resi}")
+        selection = f"chain {chain} and resi {resi}"
 
+        # Color the residue
+        cmd.color(color_name, selection)
+
+    # Force PyMOL to update the colors
+    cmd.recolor()
     cmd.show("cartoon")
     cmd.orient()
 
@@ -54,7 +62,6 @@ def make_structure_pred(wt: str, pdb: str, metric: str = "average"):
     wt = get_sequence(wt)
     hydrophobic = ("A", "V", "I", "L", "M", "F", "W", "Y")
     hydrophilic = ("D", "R", "H", "K", "E", "Q", "N", "C", "T", "S")
-
     muts = []
     preds = []
     for i, aa in enumerate(wt):
@@ -72,11 +79,12 @@ def make_structure_pred(wt: str, pdb: str, metric: str = "average"):
     model.eval()
     for i, (emb, mut) in enumerate(zip(embs, muts)):
         emb = emb.unsqueeze(0)
-        pred = model(wt_emb, emb).squeeze()
+        pred = model(wt_emb, emb).squeeze().detach().cpu()
         idx = int(mut[1:-1])
-        preds[idx].append(pred)
+        preds[idx - 1].append(pred)
 
     preds = {i: (sum(p) / len(p)) if len(p) > 0 else 0.0 for i, p in enumerate(preds)}
+    print(preds)
     pymol.finish_launching()
 
     color_by_values(pdb, preds)
@@ -86,7 +94,7 @@ def make_structure_pred(wt: str, pdb: str, metric: str = "average"):
 
 def get_sequence(s: str) -> str:
     if "fasta" in s or "fa" in s:
-        return SeqIO.parse(s, "fasta")[0]
+        return next(SeqIO.parse(s, "fasta")).seq
     return s
 
 

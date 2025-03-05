@@ -68,7 +68,7 @@ class Siamese(nn.Module):
             self.shared_layers.append(
                 block(params.hidden_dim, params.hidden_dim, act=params.act)
             )
-        self.output_dim = params.hidden_dim  # * 3
+        self.output_dim = params.hidden_dim * 2  # * 3
         self.head = nn.Sequential(
             block(self.output_dim, params.hidden_dim, drp=0.2, act=params.act),
             nn.Linear(params.hidden_dim, params.out_shape),
@@ -82,9 +82,9 @@ class Siamese(nn.Module):
     def forward(self, wt, mut, *args, **kwargs):
         wt = self.forward_single(wt)
         mut = self.forward_single(mut)
-        diff = mut - wt
+        combined = torch.cat([wt, mut], dim=1)  # mut - wt
         # combined = torch.cat([wt, mut, diff], dim=1)i
-        combined = diff
+        # combined = diff
         return self.head(combined)
 
 

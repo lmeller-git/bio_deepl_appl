@@ -30,7 +30,11 @@ def main(args):
 
     # print(args)
     # model = Siamese(hidden_dim=512, n_layers=2) #LeakyMLP(768)
-    model = MLP(ModelParams(act=nn.ReLU))
+    model = TriameseNetwork(
+        ModelParams(hidden_dim=256, n_layers=2, act=nn.ReLU),
+        ModelParams(hidden_dim=512, n_layers=3, act=nn.ReLU),
+        ModelParams(n_layers=2, hidden_dim=512),
+    )  # MLP(ModelParams(act=nn.ReLU))
     if args.mode == "cv":
         params = TrainParams(
             args.data,
