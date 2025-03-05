@@ -13,12 +13,20 @@ class ComparisonResult:
     scc: None | float
     pcc: None | float
 
-    def __init__(self, rmse: float = None, scc: float = None, pcc: float = None):
+    def __init__(
+        self,
+        rmse: float = None,
+        scc: float = None,
+        pcc: float = None,
+        acc: float = None,
+    ):
         self.pcc = pcc
         self.scc = scc
         self.rmse = rmse
+        self.acc = acc
 
     def __add__(self, rhs):
+        # TODO: fix this bullshit (its all false (what if rhs is None, but not self))
         n = ComparisonResult()
         n.rmse = (
             self.rmse + rhs.rmse
@@ -39,6 +47,13 @@ class ComparisonResult:
             if self.pcc is not None
             else rhs.pcc
             if rhs.pcc is not None
+            else None
+        )
+        n.acc = (
+            self.acc + rhs.acc
+            if self.acc is not None
+            else rhs.acc
+            if rhs.acc is not None
             else None
         )
         return n
@@ -66,12 +81,20 @@ class ComparisonResult:
             if rhs.pcc is not None
             else None
         )
+        n.acc = (
+            self.acc - rhs.acc
+            if self.acc is not None
+            else rhs.acc
+            if rhs.acc is not None
+            else None
+        )
         return n
 
     def div(self, rhs):
         self.pcc = self.pcc / rhs if self.pcc is not None else None
         self.scc = self.scc / rhs if self.scc is not None else None
         self.rmse = self.rmse / rhs if self.rmse is not None else None
+        self.acc = self.acc / rhs if self.acc is not None else None
         return self
 
     def __repr__(self):
@@ -82,6 +105,8 @@ class ComparisonResult:
             s += f"scc: {self.scc:.3f}\t"
         if self.rmse is not None:
             s += f"rmse: {self.rmse:.3f}\t"
+        if self.acc is not None:
+            s += f"acc: {self.acc:.3f}\t"
         return s
 
 
@@ -121,10 +146,13 @@ class ComparisonPlotter(Plotter):
             print("Expected dict[ComparisonResult] after finalization")
             return self.y
 
-        metrics = ["rmse", "scc", "pcc"]
+        metrics = ["rmse", "scc", "pcc", "acc"]
         models = list(self.y.keys())
         values = np.array(
-            [[self.y[m].rmse, self.y[m].scc, self.y[m].pcc] for m in models]
+            [
+                [self.y[m].rmse, self.y[m].scc, self.y[m].pcc, self.y[m].acc]
+                for m in models
+            ]
         )
 
         x = np.arange(len(metrics))
@@ -213,6 +241,7 @@ def baseline(
                     if "Pearson Correlation" in val_data.keys()
                     else None
                 ),
+                acc=(val_data["acc"] if "acc" in val_data.keys() else None),
             ),
         )
 

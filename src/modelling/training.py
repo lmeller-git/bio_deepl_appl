@@ -97,13 +97,13 @@ def train(model: nn.Module | None, params: TrainParams):
     print("model trained and saved")
     data_analysis.baseline(
         [model.cpu()],
-        ["rmse", "spearman", "pearson"],
+        ["rmse", "spearman", "pearson", "acc"],
         val_df,
         p=params.train_df + "project_data/mega_val.csv",
     )
     data_analysis.baseline(
         [model.cpu()],
-        ["rmse", "spearman", "pearson"],
+        ["rmse", "spearman", "pearson", "acc"],
         test_df,
         p=params.train_df + "project_data/mega_test.csv",
     )
@@ -268,12 +268,13 @@ def validate(
     all_y = np.concatenate(all_y)
     preds = np.concatenate(preds)
     loss = sum(losses) / len(losses)
-    r = data_analysis.validate(all_y, preds, ["pearson", "spearman"], False)
+    r = data_analysis.validate(all_y, preds, ["pearson", "spearman", "acc"], False)
     scc = r["Spearman Correlation"]
     pcc = r["Pearson Correlation"]
+    acc = r["acc"]
 
     plotter.update("val loss", loss.detach().cpu().numpy())
-    print(f"Loss: {loss:.3f} | scc: {scc:.3f} | pcc: {pcc:.3f}")
+    print(f"Loss: {loss:.3f} | scc: {scc:.3f} | pcc: {pcc:.3f} | acc: {acc:.3f}")
     return loss
 
 

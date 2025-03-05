@@ -138,7 +138,7 @@ def load_df(p: str, batch_size: int = 1024):
 class PlotMutDist(Plotter):
     def plot(self):
         plt.figure(figsize=(14, 8))
-        sns.barplot(
+        sns.histplot(
             data=self.all_counts,
             x="mutation",
             y="Occurrences",

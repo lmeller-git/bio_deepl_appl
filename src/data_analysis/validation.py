@@ -19,6 +19,12 @@ def spearman_corr(y_true, y_pred):
     return corr
 
 
+def accuracy(y_true, y_pred):
+    matches = np.sign(y_true) == np.sign(y_pred)
+    acc = np.sum(matches) / len(matches)
+    return acc
+
+
 def validate(
     y_true: np.ndarray,
     y_pred: np.ndarray,
@@ -40,6 +46,9 @@ def validate(
 
     if "spearman" in performance_metric:
         results["Spearman Correlation"] = spearman_corr(y_true, y_pred)
+
+    if "acc" in performance_metric:
+        results["acc"] = accuracy(y_true, y_pred)
 
     if visualize:
         plot_predictions(y_true, y_pred)
