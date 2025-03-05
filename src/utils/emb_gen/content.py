@@ -25,6 +25,7 @@ def get_emb(seq: str, muts: list[str]) -> tuple[torch.Tensor, list[torch.Tensor]
 
             mut_seq = seq[: aa_pos - 1] + aa_alt + seq[aa_pos:]
 
+            # print(mut)
             assert seq[aa_pos - 1] == aa_ref
 
             assert mut_seq[aa_pos - 1] == aa_alt
@@ -48,8 +49,11 @@ def get_emb(seq: str, muts: list[str]) -> tuple[torch.Tensor, list[torch.Tensor]
         ][6]
         for p in muts
     ]
+    lbls = [
+        torch.load("embeddings/" + p + ".pt", weights_only=True)["label"] for p in muts
+    ]
     shutil.rmtree("embeddings")
-    return wt_emb, embs
+    return wt_emb, embs, lbls
 
 
 def main():

@@ -25,6 +25,7 @@ def main(args):
         cross_validate,
         load_df,
         plot_mut_dist,
+        make_structure_pred,
     )
 
     # print(args)
@@ -57,6 +58,9 @@ def main(args):
         cross_validate(model, train_df, args.data + "project_data/mega_train.csv")
         return
     elif args.mode == "predict":
+        if args.prediction_mode == "whole":
+            make_structure_pred(args.wt, args.pdb)
+            return
         _ = make_predictions(args.wt, args.mutations)
         return
     else:
@@ -82,16 +86,31 @@ if __name__ == "__main__":
         "predict", help="predict ddG values for all provided mutations"
     )
 
-    inference_parser.add_argument(
+    inf_parser = inference_parser.add_subparsers(dest="prediction_mode")
+
+    single_parser = inf_parser.add_parser(
+        "single", help="make a single prediction for all given mutations"
+    )
+
+    single_parser.add_argument(
         "wt", type=str, help="fasta file containing wt seq, or a nt seq"
     )
 
-    inference_parser.add_argument(
+    single_parser.add_argument(
         "mutations",
         type=str,
         nargs="+",
         help="Mutations to check. Can be any of a fasta file, a list of sequences, a list of mutations in format <wt nt><position><mut nt>",
     )
+
+    struct_parser = inf_parser.add_parser(
+        "whole",
+        help="do a prediction on each residue and show averaged ddG changes per Residue",
+    )
+    struct_parser.add_argument(
+        "wt", type=str, help="fasta file containing wt seq, or a nt seq"
+    )
+    struct_parser.add_argument("pdb", type=str, help="pdb file")
 
     cv_parser = subparsers.add_parser("cv", help="Enable cross-validation")
     cv_parser.add_argument(
