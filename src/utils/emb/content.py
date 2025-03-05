@@ -381,9 +381,9 @@ def cross_validate(
     map_plotter.should_save("qual_map" + p.split("/")[-1])
     map_plotter.plot()
 
-    p = p.split("/")[:-2]
+    p_ = p.split("/")[:-2]
     s = ""
-    for s_ in p:
+    for s_ in p_:
         s += s_
     s += "/"
     plot_mut_dist(data=s, which=selected_groups, name=p.split("/")[-1])
