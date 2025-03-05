@@ -13,6 +13,7 @@ class DistPlotter(Plotter):
 
     def plot(self):
         sns.histplot(data=self.lbls, x="ddG_ML", hue="set", palette="viridis")
+        plt.title("ddG distribution across splits")
         plt.show()
 
     def update(self, df: pd.DataFrame, *args, **kwargs):
