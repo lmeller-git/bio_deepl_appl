@@ -48,9 +48,11 @@ def plot_model(resi: dict[int, float], pdb: str):
 
     # with open("./pred/average.json", "r") as f:
     #    resi = json.load(f)
+    x_min = min([v for v in resi.values()])  # -1.3
+    x_max = max([v for v in resi.values()])  # 0.5
 
-    x_min = min([v for v in resi.values()])
-    x_max = max([v for v in resi.values()])
+    # print(x_min)
+    # print(x_max)
 
     def rescale(dp: float) -> float:
         return (dp - x_min) / (x_max - x_min)
@@ -148,11 +150,12 @@ def make_structure_pred(wt: str, pdb: str, model_p: str, metric: str = "average"
     preds = []
     for i, aa in enumerate(wt):
         preds.append([])
+        """
         if aa not in stabilizing:
             continue
-
+        """
         for aa2 in amino_acids:
-            if aa2 != "P":
+            if aa2 == aa:
                 continue
             muts.append(f"{aa}{i + 1}{aa2}")
 
