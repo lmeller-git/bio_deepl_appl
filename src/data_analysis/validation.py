@@ -52,12 +52,14 @@ def validate(
         results["acc"] = accuracy(y_true, y_pred)
 
     if visualize:
-        plot_predictions(y_true, y_pred)
+        plot_predictions(y_true, y_pred, p=p)
 
     return results
 
 
-def plot_predictions(y_true, y_pred, title="Predictions vs. True Values"):
+def plot_predictions(
+    y_true, y_pred, title="Predictions vs. True Values", p: str = "test"
+):
     plt.figure(figsize=(14, 6))
 
     plt.subplot(1, 2, 1)
