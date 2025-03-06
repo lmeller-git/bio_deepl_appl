@@ -110,7 +110,7 @@ def train(model: nn.Module | None, params: TrainParams):
     data_analysis.baseline(
         [model.cpu()],
         ["rmse", "spearman", "pearson", "acc"],
-        test_df,
+        train_df,
         p=params.train_df + "project_data/mega_train.csv",
     )
 

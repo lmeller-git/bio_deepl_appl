@@ -9,7 +9,9 @@ import shutil
 # https://www.uniprot.org/uniprotkb/P04637/entry
 
 
-def get_emb(seq: str, muts: list[str]) -> tuple[torch.Tensor, list[torch.Tensor]]:
+def get_emb(
+    seq: str, muts: list[str]
+) -> tuple[torch.Tensor, list[torch.Tensor], list[str]]:
     with open("/tmp/seq.fasta", "w") as f:
         print(f">wt", file=f)
 

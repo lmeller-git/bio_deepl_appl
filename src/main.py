@@ -71,13 +71,8 @@ def main(args):
                 p=args.data + "project_data/mega_test.csv",
             )
             return
-        if args.model == "":
-            plot_mut_dist(args.data)
-            dist_plot(args.data)
-            # cluster_plot(args.data + "project_data/mega_train.csv")
-            # cluster_plot(args.data + "project_data/mega_val.csv")
-            # cluster_plot(args.data + "project_data/mega_test.csv")
-            return
+        plot_mut_dist(args.data)
+        dist_plot(args.data)
         model = load_model(args.model)
         train_df, val_df, test_df = load_df(args.data, args.batchsize)
         cross_validate(model, val_df, args.data + "project_data/mega_val.csv")
@@ -86,9 +81,9 @@ def main(args):
         return
     elif args.mode == "predict":
         if args.prediction_mode == "whole":
-            make_structure_pred(args.wt, args.pdb)
+            make_structure_pred(args.wt, args.pdb, args.model)
             return
-        _ = make_predictions(args.wt, args.mutations)
+        _ = make_predictions(args.wt, args.mutations, args.model)
         return
     else:
         params = TrainParams(args.data, args.out, args.epochs, args.lr, args.batchsize)
@@ -105,6 +100,13 @@ if __name__ == "__main__":
         "--verbosity", "-v", type=int, default=2, help="verbosity of the program"
     )
 
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="./triamese/best_model.pth",
+        help="path to model (for inference)",
+    )
+
     subparsers = parser.add_subparsers(dest="mode")
 
     anal_parser = subparsers.add_parser("analysis", help="data analysis")
@@ -115,7 +117,6 @@ if __name__ == "__main__":
         type=list[str],
         help="compare multiple models",
     )
-    anal_parser.add_argument("--model", default="", help="path to model")
     inference_parser = subparsers.add_parser(
         "predict", help="predict ddG values for all provided mutations"
     )
