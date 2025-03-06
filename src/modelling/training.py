@@ -90,6 +90,7 @@ def train(model: nn.Module | None, params: TrainParams):
     plotter = LossPlotter()
     print("training model")
     train_loop(model, train_df, val_df, params, plotter)
+    model.eval()
     plotter.should_save("test")
     plotter.plot()
     save_model(model, params.out + "best_model.pth")

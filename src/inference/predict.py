@@ -61,6 +61,7 @@ def make_predictions(wt: str, muts: list[str], model_p: str) -> list[float]:
 
 def make_structure_pred(wt: str, pdb: str, model_p: str, metric: str = "average"):
     wt = get_sequence(wt)
+    # TODO do a one vs all exchange
     hydrophobic = ("A", "V", "I", "L", "M", "F", "W", "Y")
     hydrophilic = ("D", "R", "H", "K", "E", "Q", "N", "C", "T", "S")
     muts = []
