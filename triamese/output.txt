@@ -1,0 +1,5 @@
+baseline: pcc: 0.200	scc: 0.171	rmse: 1.741	acc: 0.609	|	delta: pcc: 0.000	scc: 0.000	rmse: 0.000	acc: 0.000	
+model 0: pcc: 0.629	scc: 0.611	rmse: 0.728	acc: 0.768	|	delta: pcc: 0.429	scc: 0.440	rmse: -1.013	acc: 0.159	
+
+baseline: pcc: 0.188	scc: 0.159	rmse: 1.809	acc: 0.589	|	delta: pcc: 0.000	scc: 0.000	rmse: 0.000	acc: 0.000	
+model 0: pcc: 0.562	scc: 0.527	rmse: 0.878	acc: 0.749	|	delta: pcc: 0.374	scc: 0.368	rmse: -0.931	acc: 0.160
