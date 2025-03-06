@@ -3,6 +3,8 @@ import re
 from src.utils import get_emb, load_model
 import torch
 import json
+import matplotlib
+import py3Dmol
 
 # import __main__
 
@@ -39,6 +41,50 @@ def color_by_values(pdb_file, value_dict, chain="A"):
     cmd.show("cartoon")
     cmd.orient()
 """
+
+
+def plot_model(resi: dict[int, float], pdb: str):
+    cmap = matplotlib.colormaps["cividis"]
+
+    # with open("./pred/average.json", "r") as f:
+    #    resi = json.load(f)
+
+    x_min = min([v for v in resi.values()])
+    x_max = max([v for v in resi.values()])
+
+    def rescale(dp: float) -> float:
+        return (dp - x_min) / (x_max - x_min)
+
+    view = py3Dmol.view()
+    with open("pred/pdb.txt", "r") as f:
+        path = f.read().strip()
+
+    view.addModel(open(path, "r").read(), "pdb")
+    view.setStyle(
+        {
+            "cartoon": {
+                "colorscheme": {
+                    "prop": "resi",
+                    # Uncomment one line as desired
+                    #'map': { resi + 1: color_pos if resi + 1 in resid_alpha_helix else color_neg for resi in range(len(seq)) },
+                    "map": {
+                        int(k) + 685: matplotlib.colors.to_hex(cmap(rescale(v)))
+                        for k, v in resi.items()
+                    },
+                    #'map': { resi + 1: color_pos if resi + 1 in resid_binding_sites else color_neg for resi in range(len(seq)) },
+                },
+                "arrows": True,
+            }
+        }
+    )
+
+    view.zoomTo()
+    # view.show()
+    png = view._make_html()
+    # print(png)
+    with open(OUT + "protein_plot.html", "w") as f:
+        f.write(png)
+    print(f"image generated and written to {OUT + 'protein_plot.png'}")
 
 
 def make_predictions(wt: str, muts: list[str], model_p: str) -> list[float]:
@@ -89,8 +135,9 @@ def make_structure_pred(wt: str, pdb: str, model_p: str, metric: str = "average"
         i: float(sum(p) / len(p)) if len(p) > 0 else 0.0 for i, p in enumerate(preds)
     }
     print(preds)
-    with open(OUT + "average.json", "w") as f:
-        json.dump(preds, f)
+    # with open(OUT + "average.json", "w") as f:
+    #    json.dump(preds, f)
+    plot_model(preds, pdb)
     return
     # pymol.finish_launching()
 
