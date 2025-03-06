@@ -119,6 +119,7 @@ def make_structure_pred(wt: str, pdb: str, model_p: str, metric: str = "average"
     # TODO do a one vs all exchange
     # hydrophobic = ("A", "V", "I", "L", "M", "F", "W", "Y")
     # hydrophilic = ("D", "R", "H", "K", "E", "Q", "N", "C", "T", "S")
+    stabilizing = ("M", "A", "L", "E", "K")
     amino_acids = [
         "A",
         "R",
@@ -147,11 +148,14 @@ def make_structure_pred(wt: str, pdb: str, model_p: str, metric: str = "average"
     preds = []
     for i, aa in enumerate(wt):
         preds.append([])
+        if aa not in stabilizing:
+            continue
 
         for aa2 in amino_acids:
-            if aa == aa2:
+            if aa2 != "P":
                 continue
             muts.append(f"{aa}{i + 1}{aa2}")
+
         """
         if aa in hydrophobic:
             for aa2 in hydrophilic:
@@ -174,7 +178,7 @@ def make_structure_pred(wt: str, pdb: str, model_p: str, metric: str = "average"
     preds = {
         i: float(sum(p) / len(p)) if len(p) > 0 else 0.0 for i, p in enumerate(preds)
     }
-    # print(preds)
+    print(list(zip(preds.values(), wt)))
     # with open(OUT + "average.json", "w") as f:
     #    json.dump(preds, f)
     plot_model(preds, pdb)
