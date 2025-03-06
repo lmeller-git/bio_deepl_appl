@@ -59,6 +59,13 @@ def plot_model(resi: dict[int, float], pdb: str):
     with open("pred/pdb.txt", "r") as f:
         path = f.read().strip()
 
+    with open(path, "r") as f:
+        while True:
+            line = f.readline()
+            if line.startswith("ATOM"):
+                start = int(line.split()[5])
+                break
+    print(start)
     view.addModel(open(path, "r").read(), "pdb")
     view.setStyle(
         {
@@ -68,7 +75,7 @@ def plot_model(resi: dict[int, float], pdb: str):
                     # Uncomment one line as desired
                     #'map': { resi + 1: color_pos if resi + 1 in resid_alpha_helix else color_neg for resi in range(len(seq)) },
                     "map": {
-                        int(k) + 685: matplotlib.colors.to_hex(cmap(rescale(v)))
+                        int(k) + start: matplotlib.colors.to_hex(cmap(rescale(v)))
                         for k, v in resi.items()
                     },
                     #'map': { resi + 1: color_pos if resi + 1 in resid_binding_sites else color_neg for resi in range(len(seq)) },
@@ -82,9 +89,11 @@ def plot_model(resi: dict[int, float], pdb: str):
     # view.show()
     png = view._make_html()
     # print(png)
-    with open(OUT + "protein_plot.html", "w") as f:
+    with open(OUT + f'protein_plot{pdb.split("/")[-1].split(".")[0]}.html', "w") as f:
         f.write(png)
-    print(f"image generated and written to {OUT + 'protein_plot.png'}")
+    print(
+        f"image generated and written to {OUT + f'protein_plot{pdb.split("/")[-1].split(".")[0]}.html'}"
+    )
 
 
 def make_predictions(wt: str, muts: list[str], model_p: str) -> list[float]:
@@ -108,18 +117,49 @@ def make_predictions(wt: str, muts: list[str], model_p: str) -> list[float]:
 def make_structure_pred(wt: str, pdb: str, model_p: str, metric: str = "average"):
     wt = get_sequence(wt)
     # TODO do a one vs all exchange
-    hydrophobic = ("A", "V", "I", "L", "M", "F", "W", "Y")
-    hydrophilic = ("D", "R", "H", "K", "E", "Q", "N", "C", "T", "S")
+    # hydrophobic = ("A", "V", "I", "L", "M", "F", "W", "Y")
+    # hydrophilic = ("D", "R", "H", "K", "E", "Q", "N", "C", "T", "S")
+    amino_acids = [
+        "A",
+        "R",
+        "N",
+        "D",
+        "C",
+        "E",
+        "Q",
+        "G",
+        "H",
+        "I",
+        "L",
+        "K",
+        "M",
+        "F",
+        "P",
+        "S",
+        "T",
+        "W",
+        "Y",
+        "V",
+        "U",
+        "O",
+    ]
     muts = []
     preds = []
     for i, aa in enumerate(wt):
         preds.append([])
+
+        for aa2 in amino_acids:
+            if aa == aa2:
+                continue
+            muts.append(f"{aa}{i + 1}{aa2}")
+        """
         if aa in hydrophobic:
             for aa2 in hydrophilic:
                 muts.append(f"{aa}{i + 1}{aa2}")
         elif aa in hydrophilic:
             for aa2 in hydrophobic:
                 muts.append(f"{aa}{i + 1}{aa2}")
+        """
     # print(muts)
     wt_emb, embs, _ = get_emb(wt, muts)
     wt_emb = wt_emb.unsqueeze(0)
@@ -134,7 +174,7 @@ def make_structure_pred(wt: str, pdb: str, model_p: str, metric: str = "average"
     preds = {
         i: float(sum(p) / len(p)) if len(p) > 0 else 0.0 for i, p in enumerate(preds)
     }
-    print(preds)
+    # print(preds)
     # with open(OUT + "average.json", "w") as f:
     #    json.dump(preds, f)
     plot_model(preds, pdb)
