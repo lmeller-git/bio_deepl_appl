@@ -55,7 +55,6 @@ class TrainParams:
         lr: float = 1e-4,
         batch_size: int = 1024,
         cv: int = 0,
-        # cv_definition: CVDefinition = CVDefinition(),
         **kwargs,
     ):
         self.epochs = epochs
@@ -82,6 +81,7 @@ class RMSELoss(nn.Module):
 
 
 def train(model: nn.Module | None, params: TrainParams):
+    # TODO train on mirrored data (ie mut->wt)
     if params.cv > 0:
         kfold(params)
         return
@@ -136,7 +136,6 @@ def train_loop(
     scheduler2 = torch.optim.lr_scheduler.ExponentialLR(optim, 0.9)
     model.to(DEVICE)
     for epoch in tqdm(range(params.epochs), disable=VERBOSITY < 2, desc="train loop"):
-        # print(f"Epoch {epoch}, Batches: {len(train)}")
         model.train()
         step(model, optim, criterion, train, plotter)
         model.eval()
@@ -149,7 +148,6 @@ def train_loop(
 
 
 def kfold(params: TrainParams) -> nn.Module:
-    # TODO: Hyperparameter tuning via Vec<TrainParams>
     print("performing kfold cv")
     train_data = ProtEmbeddingDataset(
         params.train_df + "project_data/mega_train_embeddings",
@@ -193,7 +191,7 @@ def kfold(params: TrainParams) -> nn.Module:
     plotter = LossPlotter()
     kfold_plotter = LossPlotter("rmse kfold", out=params.out)
     kfold_params = []
-    for i in tqdm(range(len(models)), disable=VERBOSITY < 2, desc="cv"):
+    for i in range(len(models)):
         base_lr = params.lr
         base_epochs = params.epochs
         base_batch_size = params.batch_size

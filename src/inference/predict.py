@@ -5,54 +5,17 @@ import torch
 import json
 import matplotlib
 import py3Dmol
-
-# import __main__
-
-# __main__.pymol_argv = ["pymol", "-qc"]  # Quiet mode, no GUI
-# import pymol
-# from pymol import cmd
 import numpy as np
-
-"""
-def color_by_values(pdb_file, value_dict, chain="A"):
-    '''Color protein residues based on numerical values.'''
-    cmd.load(pdb_file, "protein")
-
-    # Normalize values to [0, 1]
-    values = np.array(list(value_dict.values()))
-    min_val, max_val = values.min(), values.max()
-
-    # Disable default colors
-    cmd.util.cba()  # Clear B-factor coloring
-
-    for resi, val in value_dict.items():
-        normalized = (val - min_val) / (max_val - min_val)
-        color_rgb = [normalized, 0, 1 - normalized]  # Blue → Red gradient
-        color_name = f"color_{resi}"
-
-        cmd.set_color(color_name, color_rgb)
-        selection = f"chain {chain} and resi {resi}"
-
-        # Color the residue
-        cmd.color(color_name, selection)
-
-    # Force PyMOL to update the colors
-    cmd.recolor()
-    cmd.show("cartoon")
-    cmd.orient()
-"""
 
 
 def plot_model(resi: dict[int, float], pdb: str):
     cmap = matplotlib.colormaps["cividis"]
 
-    # with open("./pred/average.json", "r") as f:
-    #    resi = json.load(f)
     x_min = min([v for v in resi.values()])  # -1.3
     x_max = max([v for v in resi.values()])  # 0.5
 
-    # print(x_min)
-    # print(x_max)
+    print(f"{x_min = }")
+    print(f"{x_max = }")
 
     def rescale(dp: float) -> float:
         return (dp - x_min) / (x_max - x_min)
@@ -74,13 +37,10 @@ def plot_model(resi: dict[int, float], pdb: str):
             "cartoon": {
                 "colorscheme": {
                     "prop": "resi",
-                    # Uncomment one line as desired
-                    #'map': { resi + 1: color_pos if resi + 1 in resid_alpha_helix else color_neg for resi in range(len(seq)) },
                     "map": {
                         int(k) + start: matplotlib.colors.to_hex(cmap(rescale(v)))
                         for k, v in resi.items()
                     },
-                    #'map': { resi + 1: color_pos if resi + 1 in resid_binding_sites else color_neg for resi in range(len(seq)) },
                 },
                 "arrows": True,
             }
@@ -88,9 +48,7 @@ def plot_model(resi: dict[int, float], pdb: str):
     )
 
     view.zoomTo()
-    # view.show()
     png = view._make_html()
-    # print(png)
     with open(OUT + f'protein_plot{pdb.split("/")[-1].split(".")[0]}.html', "w") as f:
         f.write(png)
     print(
@@ -118,7 +76,6 @@ def make_predictions(wt: str, muts: list[str], model_p: str) -> list[float]:
 
 def make_structure_pred(wt: str, pdb: str, model_p: str, metric: str = "average"):
     wt = get_sequence(wt)
-    # TODO do a one vs all exchange
     # hydrophobic = ("A", "V", "I", "L", "M", "F", "W", "Y")
     # hydrophilic = ("D", "R", "H", "K", "E", "Q", "N", "C", "T", "S")
     stabilizing = ("M", "A", "L", "E", "K")
@@ -167,7 +124,6 @@ def make_structure_pred(wt: str, pdb: str, model_p: str, metric: str = "average"
             for aa2 in hydrophobic:
                 muts.append(f"{aa}{i + 1}{aa2}")
         """
-    # print(muts)
     wt_emb, embs, _ = get_emb(wt, muts)
     wt_emb = wt_emb.unsqueeze(0)
     model = load_model(model_p)
@@ -182,15 +138,8 @@ def make_structure_pred(wt: str, pdb: str, model_p: str, metric: str = "average"
         i: float(sum(p) / len(p)) if len(p) > 0 else 0.0 for i, p in enumerate(preds)
     }
     print(list(zip(preds.values(), wt)))
-    # with open(OUT + "average.json", "w") as f:
-    #    json.dump(preds, f)
     plot_model(preds, pdb)
     return
-    # pymol.finish_launching()
-
-    # color_by_values(pdb, preds)
-    # cmd.png("colored_protein.png", 1920, 1080, dpi=300)
-    # cmd.quit()
 
 
 def get_sequence(s: str) -> str:

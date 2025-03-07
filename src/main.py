@@ -29,7 +29,6 @@ def main(args):
         baseline,
     )
 
-    # print(args)
     # model = Siamese(hidden_dim=512, n_layers=2) #LeakyMLP(768)
     model = TriameseNetwork(
         ModelParams(hidden_dim=256, n_layers=2, act=nn.ReLU),

@@ -27,6 +27,7 @@ def block(
 
 
 def dot_product(a, b):
+    # TODO fix
     return torch.bmm(a, b.transpose(1, 2))
 
 
