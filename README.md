@@ -19,6 +19,14 @@ add src to you PYTHONPATH
 
 ```$ python src/main.py --data <path-to-data-dir>```
 
+to predict ddG value for aminoacid sequences:
+
+```$ python src/main.py predict <wt seq> <mutations>```
+
+for 3D visualization:
+
+```$ python src/main.py predict whole <wt_seq> <pdb file>```
+
 The data directory should have this structure:  
 ```
 data

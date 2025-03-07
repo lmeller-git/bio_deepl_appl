@@ -36,6 +36,7 @@ def diff(a, b):
 
 
 def cosine_dissimilarity(a, b):
+    # TODO fix
     dot_prod = torch.bmm(a, b.transpose(1, 2))
 
     norm_a = torch.norm(a, p=2, dim=2, keepdim=True)
